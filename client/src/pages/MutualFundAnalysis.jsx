@@ -14,9 +14,7 @@ import {
   BarElement,
 } from 'chart.js';
 import { Line, Pie, Bar } from 'react-chartjs-2';
-import {
-  AlertTriangle
-} from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import ChatInterface from '../components/common/ChatInterface';
 
 ChartJS.register(
@@ -33,8 +31,10 @@ ChartJS.register(
 
 const MutualFundAnalysis = () => {
   const [portfolioData, setPortfolioData] = useState(null);
+  const [stockData, setStockData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('mutualFunds');
   const { user, isAuthenticated } = useAuthStore();
 
   // Helper functions
@@ -51,29 +51,59 @@ const MutualFundAnalysis = () => {
     });
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  // Fetch mutual fund data
+  const fetchMutualFundData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Get data from API
-        const response = await axios.get('http://localhost:8000/api/mutual-funds/analysis');
+      const response = await axios.get('http://localhost:8000/api/mutual-funds/analysis');
 
-        if (response.data.success) {
-          setPortfolioData(response.data.data);
-        } else {
-          throw new Error(response.data.message || 'Failed to fetch portfolio data');
-        }
-      } catch (err) {
-        console.error('Error fetching mutual fund data:', err);
-        setError(err.message || 'Failed to fetch portfolio data');
-      } finally {
-        setLoading(false);
+      if (response.data.success) {
+        setPortfolioData(response.data.data);
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch portfolio data');
       }
-    };
+    } catch (err) {
+      console.error('Error fetching mutual fund data:', err);
+      setError(err.message || 'Failed to fetch portfolio data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchData();
+  // Fetch stock data
+  const fetchStockData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await axios.get('http://localhost:8000/api/mutual-funds/stock-analysis');
+
+      if (response.data.success) {
+        setStockData(response.data.data);
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch stock data');
+      }
+    } catch (err) {
+      console.error('Error fetching stock data:', err);
+      setError(err.message || 'Failed to fetch stock data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'mutualFunds') {
+      fetchMutualFundData();
+    } else if (activeTab === 'stocks') {
+      fetchStockData();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    // Initial load
+    fetchMutualFundData();
   }, []);
 
   if (loading) {
@@ -110,11 +140,11 @@ const MutualFundAnalysis = () => {
 
   // Chart configurations
   const portfolioTimelineChart = {
-    labels: portfolioData.portfolioTimeline.map(p => new Date(p.date).toLocaleDateString()),
+    labels: portfolioData?.portfolioTimeline?.map(p => new Date(p.date).toLocaleDateString()) || [],
     datasets: [
       {
         label: 'Portfolio Value',
-        data: portfolioData.portfolioTimeline.map(p => p.value),
+        data: portfolioData?.portfolioTimeline?.map(p => p.value) || [],
         borderColor: '#a3e635',
         backgroundColor: 'rgba(163, 230, 53, 0.1)',
         tension: 0.4,
@@ -129,10 +159,10 @@ const MutualFundAnalysis = () => {
   };
 
   const assetDistributionChart = {
-    labels: portfolioData.holdings.map(h => h.name),
+    labels: portfolioData?.holdings?.map(h => h.name) || [],
     datasets: [
       {
-        data: portfolioData.holdings.map(h => h.currentValue),
+        data: portfolioData?.holdings?.map(h => h.currentValue) || [],
         backgroundColor: [
           '#a3e635',
           '#bef264',
@@ -150,11 +180,11 @@ const MutualFundAnalysis = () => {
   };
 
   const classificationChart = {
-    labels: Object.keys(portfolioData.classification),
+    labels: Object.keys(portfolioData?.classification || {}),
     datasets: [
       {
-        data: Object.values(portfolioData.classification).map(funds =>
-          funds.reduce((sum, fund) => sum + fund.currentValue, 0)
+        data: Object.values(portfolioData?.classification || {}).map(funds =>
+          funds.reduce((sum, fund) => sum + (fund.currentValue || fund.current_value || 0), 0)
         ),
         backgroundColor: [
           '#a3e635',
@@ -173,14 +203,14 @@ const MutualFundAnalysis = () => {
   };
 
   const returnsChart = {
-    labels: portfolioData.holdings.map(h => h.name),
+    labels: portfolioData?.holdings?.map(h => h.name) || [],
     datasets: [
       {
         label: 'Returns (%)',
-        data: portfolioData.holdings.map(h => h.returnsPercent),
-        backgroundColor: portfolioData.holdings.map(h =>
-          h.returnsPercent >= 0 ? '#a3e635' : '#ef4444'
-        ),
+        data: portfolioData?.holdings?.map(h => h.returnsPercent || h.returns_percent || 0) || [],
+        backgroundColor: portfolioData?.holdings?.map(h =>
+          (h.returnsPercent || h.returns_percent || 0) >= 0 ? '#a3e635' : '#ef4444'
+        ) || [],
         borderColor: '#ffffff',
         borderWidth: 2,
         borderRadius: 8,
@@ -279,194 +309,491 @@ const MutualFundAnalysis = () => {
     },
   };
 
-  // Use top performers and underperformers directly from API
-  const topMovers = portfolioData.topPerformers || [];
-  const topLosers = portfolioData.underperformers || [];
+  // Get data with fallbacks
+  const topMovers = portfolioData?.topPerformers || [];
+  const topLosers = portfolioData?.underperformers || [];
+  const sortedFunds = [...(portfolioData?.holdings || [])].sort((a, b) => 
+    (b.currentValue || b.current_value || 0) - (a.currentValue || a.current_value || 0)
+  );
+  const totalReturnsPercent = portfolioData?.summary?.totalReturnsPercent || 0;
 
-  // Sort funds for display in table
-  const sortedFunds = [...(portfolioData.holdings || [])].sort((a, b) => b.currentValue - a.currentValue);
-
-  // Get summary data
-  const totalReturnsPercent = portfolioData.summary ? portfolioData.summary.totalReturnsPercent : 0;
+  // Tab component
+  const TabButton = ({ active, onClick, children }) => (
+    <button
+      onClick={onClick}
+      className={`px-6 py-3 text-sm font-medium rounded-t-lg transition-colors ${
+        active 
+          ? 'bg-[var(--color-bg-secondary)] text-[var(--color-accent)] border-t-2 border-l-2 border-r-2 border-[var(--color-grey-dark)]' 
+          : 'text-[var(--color-grey-light)] hover:bg-[var(--color-bg-tertiary)]'
+      }`}
+    >
+      {children}
+    </button>
+  );
 
   return (
     <div className="h-screen flex overflow-hidden p-6 gap-4">
       {/* Dashboard Section - Fixed height with internal scroll */}
       <div className="flex-1 flex flex-col min-w-0">
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-full space-y-8 p-6 border border-[1px] border-[var(--color-grey-dark)] rounded-xl">
-            <h1 className="text-4xl font-bold text-[var(--color-white)]">Mutual Fund Analysis</h1>
+          {/* Tabs */}
+          <div className="mb-6 flex space-x-0 border-b border-[var(--color-grey-dark)]">
+            <TabButton 
+              active={activeTab === 'mutualFunds'}
+              onClick={() => setActiveTab('mutualFunds')}
+            >
+              Mutual Funds
+            </TabButton>
+            <TabButton 
+              active={activeTab === 'stocks'}
+              onClick={() => setActiveTab('stocks')}
+            >
+              Stocks
+            </TabButton>
+          </div>
+          
+          {/* Tab Content */}
+          {activeTab === 'mutualFunds' ? (
+            <div className="max-w-full space-y-8 p-6 border border-[var(--color-grey-dark)] rounded-xl">
+              <h1 className="text-4xl font-bold text-[var(--color-white)]">Mutual Fund Analysis</h1>
 
-            {/* Portfolio Summary */}
-            <div className="rounded-xl p-6 border shadow-lg text-white" style={{ backgroundColor: 'var(--color-bg-secondary)', borderColor: 'var(--color-grey-dark)' }}>
-              <h2 className="text-2xl font-semibold mb-4">Portfolio Summary</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {['Current Value', 'Total Invested', 'Total Returns'].map((label, i) => (
-                  <div key={i} className="rounded-lg p-5 border shadow-sm" style={{ backgroundColor: 'var(--color-bg-tertiary)', borderColor: 'var(--color-grey-dark)' }}>
-                    <h3 className="text-[var(--color-grey-light)] text-sm">{label}</h3>
-                    {label === 'Total Returns' ? (
-                      <div className="flex items-end space-x-2">
-                        <p className="text-3xl font-bold">{formatCurrency(portfolioData.summary?.totalReturns || 0)}</p>
-                        <p className="text-xl font-medium" style={{ color: totalReturnsPercent >= 0 ? 'var(--color-accent-light)' : '#f87171' }}>
-                          {totalReturnsPercent >= 0 ? '+' : ''}{totalReturnsPercent.toFixed(2)}%
+              {/* Portfolio Summary */}
+              <div className="rounded-xl p-6 border shadow-lg text-white bg-[var(--color-bg-secondary)] border-[var(--color-grey-dark)]">
+                <h2 className="text-2xl font-semibold mb-4">Portfolio Summary</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {['Current Value', 'Total Invested', 'Total Returns'].map((label, i) => (
+                    <div key={i} className="rounded-lg p-5 border shadow-sm bg-[var(--color-bg-tertiary)] border-[var(--color-grey-dark)]">
+                      <h3 className="text-[var(--color-grey-light)] text-sm">{label}</h3>
+                      {label === 'Total Returns' ? (
+                        <div className="flex items-end space-x-2">
+                          <p className="text-3xl font-bold">{formatCurrency(portfolioData?.summary?.totalReturns || 0)}</p>
+                          <p className="text-xl font-medium" style={{ color: totalReturnsPercent >= 0 ? 'var(--color-accent-light)' : '#f87171' }}>
+                            {totalReturnsPercent >= 0 ? '+' : ''}{totalReturnsPercent.toFixed(2)}%
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-3xl font-bold">
+                          {formatCurrency(label === 'Current Value' ? portfolioData?.summary?.totalValue : portfolioData?.summary?.totalInvested || 0)}
                         </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Portfolio Growth Chart */}
+                <div className="mt-6">
+                  <h3 className="text-lg font-medium mb-3 text-[var(--color-grey-light)]">Portfolio Growth</h3>
+                  <div className="h-64 w-full">
+                    <Line data={portfolioTimelineChart} options={chartOptions} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Holdings Table */}
+              <div className="rounded-xl p-6 border shadow-lg text-white bg-[var(--color-bg-secondary)] border-[var(--color-grey-dark)]">
+                <h2 className="text-2xl font-bold mb-4 text-[var(--color-white)]">Holdings</h2>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-[var(--color-grey-dark)]">
+                    <thead>
+                      <tr>
+                        {['Fund', 'Units', 'Current Value', 'Invested', 'Returns'].map((h, i) => (
+                          <th key={i} className="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider text-[var(--color-grey-light)]">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--color-grey-dark)]">
+                      {sortedFunds.map((fund) => {
+                        const returns = fund.returns || 0;
+                        const percent = fund.returns_percent || fund.returnsPercent || 0;
+                        return (
+                          <tr key={fund.isin} className="hover:bg-[var(--color-bg-tertiary)] hover:bg-opacity-50 transition-colors">
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div>
+                                <div className="font-medium">{fund.name}</div>
+                                <div className="text-sm truncate max-w-[200px] text-[var(--color-grey-medium)]">{fund.full_name || fund.fullName}</div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right text-[var(--color-grey-light)] whitespace-nowrap">
+                              {(fund.total_units || fund.totalUnits || 0).toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                              {formatCurrency(fund.current_value || fund.currentValue)}
+                            </td>
+                            <td className="px-4 py-3 text-right text-[var(--color-grey-light)] whitespace-nowrap">
+                              {formatCurrency(fund.total_invested || fund.totalInvested)}
+                            </td>
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                              <div className="flex flex-col items-end">
+                                <span className="font-medium" style={{ color: returns >= 0 ? 'var(--color-accent-light)' : '#f87171' }}>
+                                  {returns >= 0 ? '+' : ''}{formatCurrency(Math.abs(returns))}
+                                </span>
+                                <span className="text-xs" style={{ color: percent >= 0 ? 'var(--color-accent-light)' : '#f87171' }}>
+                                  {percent >= 0 ? '+' : ''}{percent.toFixed(2)}%
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Performance Bar Chart */}
+              <div className="bg-[var(--color-bg-secondary)] rounded-xl p-6 border border-[var(--color-grey-dark)] shadow-lg text-white">
+                <h2 className="text-2xl font-semibold mb-4">Performance</h2>
+                <div className="h-80 w-full">
+                  <Bar data={returnsChart} options={chartOptions} />
+                </div>
+              </div>
+
+              {/* Allocation Section */}
+              <div className="bg-[var(--color-bg-secondary)] rounded-xl p-6 border border-[var(--color-grey-dark)] shadow-lg text-white">
+                <h2 className="text-2xl font-semibold mb-6">Allocation</h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Top Performers */}
+                  <div>
+                    <h3 className="text-xl font-medium mb-4 text-[var(--color-grey-light)]">Top Performers</h3>
+                    <div className="space-y-4">
+                      {topMovers.length > 0 ? topMovers.map((fund) => (
+                        <div key={fund.isin} className="bg-[var(--color-bg-tertiary)] rounded-lg p-4 border border-[var(--color-accent-light)]/20">
+                          <div className="flex justify-between">
+                            <div>
+                              <h4 className="font-medium">{fund.name}</h4>
+                              <p className="text-sm text-[var(--color-grey-light)]">{fund.full_name}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[var(--color-accent-light)] font-bold text-lg">
+                                +{(fund.returns_percent || 0).toFixed(2)}%
+                              </p>
+                              <p className="text-[var(--color-accent-light)]/80 text-sm">
+                                +{formatCurrency(fund.returns || 0)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )) : (
+                        <p className="text-[var(--color-grey-light)]">No top performers data available</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Underperformers */}
+                  <div>
+                    <h3 className="text-xl font-medium mb-4 text-[var(--color-grey-light)]">Underperformers</h3>
+                    <div className="space-y-4">
+                      {topLosers.length > 0 ? topLosers.map((fund) => (
+                        <div key={fund.isin} className="bg-[var(--color-bg-tertiary)] rounded-lg p-4 border border-red-400/20">
+                          <div className="flex justify-between">
+                            <div>
+                              <h4 className="font-medium">{fund.name}</h4>
+                              <p className="text-sm text-[var(--color-grey-light)]">{fund.full_name}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-red-400 font-bold text-lg">
+                                {(fund.returns_percent || 0).toFixed(2)}%
+                              </p>
+                              <p className="text-red-400/80 text-sm">
+                                {formatCurrency(fund.returns || 0)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )) : (
+                        <p className="text-[var(--color-grey-light)]">No underperformers data available</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Category Allocation */}
+                <div className="mt-8">
+                  <h3 className="text-xl font-medium mb-4 text-[var(--color-grey-light)]">Category Allocation</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="h-64">
+                      <Pie data={classificationChart} options={pieOptions} />
+                    </div>
+                    <div className="space-y-3">
+                      {Object.keys(portfolioData?.classification || {}).map((category) => {
+                        const funds = portfolioData.classification[category];
+                        const categoryValue = funds.reduce((sum, fund) => sum + (fund.current_value || fund.currentValue || 0), 0);
+                        const percent = ((categoryValue / (portfolioData?.summary?.totalValue || 1)) * 100).toFixed(1);
+                        return (
+                          <div key={category} className="flex justify-between items-center p-3 rounded-lg bg-[var(--color-bg-tertiary)]">
+                            <span className="text-[var(--color-grey-light)]">{category}</span>
+                            <div className="text-right">
+                              <span className="text-white font-medium">{formatCurrency(categoryValue)}</span>
+                              <span className="text-[var(--color-grey-medium)] text-sm ml-2">({percent}%)</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Stocks Tab Content
+            <div className="max-w-full space-y-8 p-6 border border-[var(--color-grey-dark)] rounded-xl">
+              <h1 className="text-4xl font-bold text-[var(--color-white)]">Stock Analysis</h1>
+
+              {stockData ? (
+                <>
+                  {/* Portfolio Summary */}
+                  <div className="rounded-xl p-6 border shadow-lg text-white bg-[var(--color-bg-secondary)] border-[var(--color-grey-dark)]">
+                    <h2 className="text-2xl font-semibold mb-4">Portfolio Summary</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {['Current Value', 'Total Invested', 'Total Returns'].map((label, i) => (
+                        <div key={i} className="rounded-lg p-5 border shadow-sm bg-[var(--color-bg-tertiary)] border-[var(--color-grey-dark)]">
+                          <h3 className="text-[var(--color-grey-light)] text-sm">{label}</h3>
+                          {label === 'Total Returns' ? (
+                            <div className="flex items-end space-x-2">
+                              <p className="text-3xl font-bold">{formatCurrency(stockData?.summary?.totalReturns || 0)}</p>
+                              <p className="text-xl font-medium" style={{ color: (stockData?.summary?.totalReturnsPercent || 0) >= 0 ? 'var(--color-accent-light)' : '#f87171' }}>
+                                {(stockData?.summary?.totalReturnsPercent || 0) >= 0 ? '+' : ''}{(stockData?.summary?.totalReturnsPercent || 0).toFixed(2)}%
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-3xl font-bold">
+                              {formatCurrency(label === 'Current Value' ? stockData?.summary?.totalValue : stockData?.summary?.totalInvested || 0)}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Portfolio Growth Chart */}
+                    {stockData?.portfolioTimeline && stockData.portfolioTimeline.length > 0 && (
+                      <div className="mt-6">
+                        <h3 className="text-lg font-medium mb-3 text-[var(--color-grey-light)]">Portfolio Growth</h3>
+                        <div className="h-64 w-full">
+                          <Line 
+                            data={{
+                              labels: stockData.portfolioTimeline.map(p => new Date(p.date).toLocaleDateString()),
+                              datasets: [{
+                                label: 'Portfolio Value',
+                                data: stockData.portfolioTimeline.map(p => p.value),
+                                borderColor: '#a3e635',
+                                backgroundColor: 'rgba(163, 230, 53, 0.1)',
+                                tension: 0.4,
+                                fill: true,
+                                pointBackgroundColor: '#a3e635',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                pointRadius: 6,
+                                pointHoverRadius: 8,
+                              }]
+                            }} 
+                            options={chartOptions} 
+                          />
+                        </div>
                       </div>
-                    ) : (
-                      <p className="text-3xl font-bold">
-                        {formatCurrency(label === 'Current Value' ? portfolioData.summary?.totalValue : portfolioData.summary?.totalInvested || 0)}
-                      </p>
                     )}
                   </div>
-                ))}
-              </div>
 
-              {/* Portfolio Growth Chart */}
-              <div className="mt-6">
-                <h3 className="text-lg font-medium mb-3 text-[var(--color-grey-light)]">Portfolio Growth</h3>
-                <div className="h-64 w-full">
-                  <Line data={portfolioTimelineChart} options={chartOptions} />
-                </div>
-              </div>
-            </div>
-
-            {/* Holdings Table */}
-            <div className="rounded-xl p-6 border shadow-lg text-white" style={{ backgroundColor: 'var(--color-bg-secondary)', borderColor: 'var(--color-grey-dark)' }}>
-              <h2 className="text-2xl font-bold mb-4 text-[var(--color-white)]">Holdings</h2>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y" style={{ borderColor: 'var(--color-grey-dark)' }}>
-                  <thead>
-                    <tr>
-                      {['Fund', 'Units', 'Current Value', 'Invested', 'Returns'].map((h, i) => (
-                        <th key={i} className="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider text-[var(--color-grey-light)]">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y" style={{ borderColor: 'var(--color-grey-dark)' }}>
-                    {sortedFunds.map((fund) => {
-                      const returns = fund.returns || 0;
-                      const percent = fund.returns_percent || fund.returnsPercent || 0;
-                      return (
-                        <tr key={fund.isin} className="hover:bg-opacity-20 transition-colors" style={{ backgroundColor: 'var(--color-bg-tertiary)' }}>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div>
-                              <div className="font-medium">{fund.name}</div>
-                              <div className="text-sm truncate max-w-[200px] text-[var(--color-grey-medium)]">{fund.full_name || fund.fullName}</div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-right text-[var(--color-grey-light)] whitespace-nowrap">{fund.total_units?.toFixed(2)}</td>
-                          <td className="px-4 py-3 text-right whitespace-nowrap">{formatCurrency(fund.current_value)}</td>
-                          <td className="px-4 py-3 text-right text-[var(--color-grey-light)] whitespace-nowrap">{formatCurrency(fund.total_invested)}</td>
-                          <td className="px-4 py-3 text-right whitespace-nowrap">
-                            <div className="flex flex-col items-end">
-                              <span className="font-medium" style={{ color: returns >= 0 ? 'var(--color-accent-light)' : '#f87171' }}>
-                                {returns >= 0 ? '+' : ''}{formatCurrency(Math.abs(returns))}
-                              </span>
-                              <span className="text-xs" style={{ color: percent >= 0 ? 'var(--color-accent-light)' : '#f87171' }}>
-                                {percent >= 0 ? '+' : ''}{percent.toFixed(2)}%
-                              </span>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Performance Bar Chart */}
-            <div className="bg-[var(--color-bg-secondary)] rounded-xl p-6 border border-[var(--color-grey-dark)] shadow-lg text-white">
-              <h2 className="text-2xl font-semibold mb-4">Performance</h2>
-              <div className="h-80 w-full">
-                <Bar data={returnsChart} options={chartOptions} />
-              </div>
-            </div>
-
-            {/* Allocation Section */}
-            <div className="bg-[var(--color-bg-secondary)] rounded-xl p-6 border border-[var(--color-grey-dark)] shadow-lg text-white">
-              <h2 className="text-2xl font-semibold mb-6">Allocation</h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Top Performers */}
-                <div>
-                  <h3 className="text-xl font-medium mb-4 text-[var(--color-grey-light)]">Top Performers</h3>
-                  <ul className="space-y-4">
-                    {topMovers.map((fund) => (
-                      <li key={fund.isin} className="bg-[var(--color-bg-tertiary)] rounded-lg p-4 border border-[var(--color-accent-light)]/20">
-                        <div className="flex justify-between">
-                          <div>
-                            <h4 className="font-medium">{fund.name}</h4>
-                            <p className="text-sm text-[var(--color-grey-light)]">{fund.full_name}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-[var(--color-accent-light)] font-bold text-lg">
-                              +{(fund.returns_percent || 0).toFixed(2)}%
-                            </p>
-                            <p className="text-[var(--color-accent-light)]/80 text-sm">
-                              +{formatCurrency(fund.returns || 0)}
-                            </p>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Underperformers */}
-                <div>
-                  <h3 className="text-xl font-medium mb-4 text-[var(--color-grey-light)]">Underperformers</h3>
-                  <ul className="space-y-4">
-                    {topLosers.map((fund) => (
-                      <li key={fund.isin} className="bg-[var(--color-bg-tertiary)] rounded-lg p-4 border border-red-400/20">
-                        <div className="flex justify-between">
-                          <div>
-                            <h4 className="font-medium">{fund.name}</h4>
-                            <p className="text-sm text-[var(--color-grey-light)]">{fund.full_name}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-red-400 font-bold text-lg">
-                              {(fund.returns_percent || 0).toFixed(2)}%
-                            </p>
-                            <p className="text-red-400/80 text-sm">
-                              {formatCurrency(fund.returns || 0)}
-                            </p>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Category Allocation */}
-              <div className="mt-8">
-                <h3 className="text-xl font-medium mb-4 text-[var(--color-grey-light)]">Category Allocation</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="h-64">
-                    <Pie data={classificationChart} options={pieOptions} />
+                  {/* Holdings Table */}
+                  <div className="rounded-xl p-6 border shadow-lg text-white bg-[var(--color-bg-secondary)] border-[var(--color-grey-dark)]">
+                    <h2 className="text-2xl font-bold mb-4 text-[var(--color-white)]">Holdings</h2>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-[var(--color-grey-dark)]">
+                        <thead>
+                          <tr>
+                            {['Stock', 'Quantity', 'Current Value', 'Invested', 'Returns', 'Avg Price', 'Current Price'].map((h, i) => (
+                              <th key={i} className="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider text-[var(--color-grey-light)]">
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[var(--color-grey-dark)]">
+                          {(stockData?.holdings || []).map((stock, index) => {
+                            const returns = stock.returns || 0;
+                            const percent = stock.returns_percent || stock.returnsPercent || 0;
+                            return (
+                              <tr key={stock.symbol || index} className="hover:bg-[var(--color-bg-tertiary)] hover:bg-opacity-50 transition-colors">
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <div>
+                                    <div className="font-medium">{stock.symbol}</div>
+                                    <div className="text-sm truncate max-w-[200px] text-[var(--color-grey-medium)]">{stock.company_name || stock.companyName}</div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-right text-[var(--color-grey-light)] whitespace-nowrap">
+                                  {(stock.quantity || 0).toFixed(0)}
+                                </td>
+                                <td className="px-4 py-3 text-right whitespace-nowrap">
+                                  {formatCurrency(stock.current_value || stock.currentValue)}
+                                </td>
+                                <td className="px-4 py-3 text-right text-[var(--color-grey-light)] whitespace-nowrap">
+                                  {formatCurrency(stock.total_invested || stock.totalInvested)}
+                                </td>
+                                <td className="px-4 py-3 text-right whitespace-nowrap">
+                                  <div className="flex flex-col items-end">
+                                    <span className="font-medium" style={{ color: returns >= 0 ? 'var(--color-accent-light)' : '#f87171' }}>
+                                      {returns >= 0 ? '+' : ''}{formatCurrency(Math.abs(returns))}
+                                    </span>
+                                    <span className="text-xs" style={{ color: percent >= 0 ? 'var(--color-accent-light)' : '#f87171' }}>
+                                      {percent >= 0 ? '+' : ''}{percent.toFixed(2)}%
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-right text-[var(--color-grey-light)] whitespace-nowrap">
+                                  ₹{(stock.avg_price || stock.avgPrice || 0).toFixed(2)}
+                                </td>
+                                <td className="px-4 py-3 text-right text-[var(--color-grey-light)] whitespace-nowrap">
+                                  ₹{(stock.current_price || stock.currentPrice || 0).toFixed(2)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    {Object.keys(portfolioData.classification || {}).map((category) => {
-                      const funds = portfolioData.classification[category];
-                      const categoryValue = funds.reduce((sum, fund) => sum + (fund.current_value || 0), 0);
-                      const percent = ((categoryValue / (portfolioData.summary?.totalValue || 1)) * 100).toFixed(1);
-                      return (
-                        <div key={category} className="flex justify-between items-center p-3 rounded-lg bg-[var(--color-bg-tertiary)]">
-                          <span className="text-[var(--color-grey-light)]">{category}</span>
-                          <div className="text-right">
-                            <span className="text-white font-medium">{formatCurrency(categoryValue)}</span>
-                            <span className="text-[var(--color-grey-medium)] text-sm ml-2">({percent}%)</span>
+
+                  {/* Performance Bar Chart */}
+                  {stockData?.holdings && stockData.holdings.length > 0 && (
+                    <div className="bg-[var(--color-bg-secondary)] rounded-xl p-6 border border-[var(--color-grey-dark)] shadow-lg text-white">
+                      <h2 className="text-2xl font-semibold mb-4">Performance</h2>
+                      <div className="h-80 w-full">
+                        <Bar 
+                          data={{
+                            labels: stockData.holdings.map(h => h.symbol),
+                            datasets: [{
+                              label: 'Returns (%)',
+                              data: stockData.holdings.map(h => h.returns_percent || h.returnsPercent || 0),
+                              backgroundColor: stockData.holdings.map(h =>
+                                (h.returns_percent || h.returnsPercent || 0) >= 0 ? '#a3e635' : '#ef4444'
+                              ),
+                              borderColor: '#ffffff',
+                              borderWidth: 2,
+                              borderRadius: 8,
+                              borderSkipped: false,
+                            }]
+                          }} 
+                          options={chartOptions} 
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Top Performers and Underperformers */}
+                  <div className="bg-[var(--color-bg-secondary)] rounded-xl p-6 border border-[var(--color-grey-dark)] shadow-lg text-white">
+                    <h2 className="text-2xl font-semibold mb-6">Performance Analysis</h2>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* Top Performers */}
+                      <div>
+                        <h3 className="text-xl font-medium mb-4 text-[var(--color-grey-light)]">Top Performers</h3>
+                        <div className="space-y-4">
+                          {(stockData?.topPerformers || []).length > 0 ? stockData.topPerformers.map((stock, index) => (
+                            <div key={stock.symbol || index} className="bg-[var(--color-bg-tertiary)] rounded-lg p-4 border border-[var(--color-accent-light)]/20">
+                              <div className="flex justify-between">
+                                <div>
+                                  <h4 className="font-medium">{stock.symbol}</h4>
+                                  <p className="text-sm text-[var(--color-grey-light)]">{stock.company_name || stock.companyName}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-[var(--color-accent-light)] font-bold text-lg">
+                                    +{(stock.returns_percent || 0).toFixed(2)}%
+                                  </p>
+                                  <p className="text-[var(--color-accent-light)]/80 text-sm">
+                                    +{formatCurrency(stock.returns || 0)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )) : (
+                            <p className="text-[var(--color-grey-light)]">No top performers data available</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Underperformers */}
+                      <div>
+                        <h3 className="text-xl font-medium mb-4 text-[var(--color-grey-light)]">Underperformers</h3>
+                        <div className="space-y-4">
+                          {(stockData?.underperformers || []).length > 0 ? stockData.underperformers.map((stock, index) => (
+                            <div key={stock.symbol || index} className="bg-[var(--color-bg-tertiary)] rounded-lg p-4 border border-red-400/20">
+                              <div className="flex justify-between">
+                                <div>
+                                  <h4 className="font-medium">{stock.symbol}</h4>
+                                  <p className="text-sm text-[var(--color-grey-light)]">{stock.company_name || stock.companyName}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-red-400 font-bold text-lg">
+                                    {(stock.returns_percent || 0).toFixed(2)}%
+                                  </p>
+                                  <p className="text-red-400/80 text-sm">
+                                    {formatCurrency(stock.returns || 0)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )) : (
+                            <p className="text-[var(--color-grey-light)]">No underperformers data available</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sector Allocation */}
+                    {stockData?.sectorAllocation && Object.keys(stockData.sectorAllocation).length > 0 && (
+                      <div className="mt-8">
+                        <h3 className="text-xl font-medium mb-4 text-[var(--color-grey-light)]">Sector Allocation</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="h-64">
+                            <Pie 
+                              data={{
+                                labels: Object.keys(stockData.sectorAllocation),
+                                datasets: [{
+                                  data: Object.values(stockData.sectorAllocation),
+                                  backgroundColor: [
+                                    '#a3e635', '#bef264', '#84cc16', '#65a30d', 
+                                    '#4d7c0f', '#365314', '#1a2e05', '#0f172a'
+                                  ],
+                                  borderColor: '#ffffff',
+                                  borderWidth: 3,
+                                  hoverBorderWidth: 4,
+                                }]
+                              }} 
+                              options={pieOptions} 
+                            />
+                          </div>
+                          <div className="space-y-3">
+                            {Object.keys(stockData.sectorAllocation).map((sector) => {
+                              const sectorValue = stockData.sectorAllocation[sector];
+                              const percent = ((sectorValue / (stockData?.summary?.totalValue || 1)) * 100).toFixed(1);
+                              return (
+                                <div key={sector} className="flex justify-between items-center p-3 rounded-lg bg-[var(--color-bg-tertiary)]">
+                                  <span className="text-[var(--color-grey-light)]">{sector}</span>
+                                  <div className="text-right">
+                                    <span className="text-white font-medium">{formatCurrency(sectorValue)}</span>
+                                    <span className="text-[var(--color-grey-medium)] text-sm ml-2">({percent}%)</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-16">
+                  <div className="bg-[var(--color-bg-secondary)] rounded-xl p-8 border border-[var(--color-grey-dark)] shadow-lg text-white">
+                    <h2 className="text-2xl font-semibold mb-4">No Stock Data Available</h2>
+                    <p className="text-[var(--color-grey-light)]">Connect your stock portfolio to view detailed analysis.</p>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
       </div>
 
