@@ -6,6 +6,7 @@ class SpendingIn(BaseModel):
     date: date
     title: str
     category: str
+    amount: float
 
 class Spending(SpendingIn):
     id: str
