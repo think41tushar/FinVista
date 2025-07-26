@@ -19,8 +19,8 @@ pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def main():
     # 1) Create or fetch test users
     test_users = [
-        {"email": "alice@example.com", "password": "alicepwd"},
-        {"email": "bob@example.com",   "password": "bobpwd"},
+        {"name": "Alice", "email": "alice@example.com", "password": "alicepwd"},
+        {"name": "Bob", "email": "bob@example.com", "password": "bobpwd"},
     ]
 
     seeded_users = []
@@ -31,8 +31,9 @@ def main():
             seeded_users.append(existing)
         else:
             hashed = pwd_ctx.hash(u["password"])
-            new_u = create_user(u["email"], hashed)
-            print(f"[CREATED] user: {u['email']} ({new_u['id']})")
+            name = u.get("name", "Alex")  # Default to "Alex" if name not provided
+            new_u = create_user(name, u["email"], hashed)
+            print(f"[CREATED] user: {name} ({u['email']}) ({new_u['id']})")
             seeded_users.append(new_u)
 
     # 2) Create 5 random txns per user

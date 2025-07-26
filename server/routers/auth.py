@@ -9,7 +9,8 @@ router = APIRouter(prefix="/auth")
 @router.post("/login")
 def login(data: UserIn):
     try:
-        user = authenticate_or_register(data.name, data.email, data.password)
+        name = data.name if data.name else "Alex"
+        user = authenticate_or_register(name, data.email, data.password)
         return {"user": user}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -24,6 +25,9 @@ def bulk_fetch_users(user_ids: List[str]):
 @router.put("/users/{user_id}")
 def update_single_user(user_id: str, updates: dict):
     try:
+        # Ensure name field has a default value if not provided
+        if "name" not in updates or not updates["name"]:
+            updates["name"] = "Alex"
         update_user(user_id, updates)
         return {"message": "User updated successfully"}
     except Exception as e:
@@ -32,6 +36,10 @@ def update_single_user(user_id: str, updates: dict):
 @router.put("/users/bulk-update")
 def bulk_update_user_data(updates: List[dict]):
     try:
+        # Ensure name field has a default value for each update if not provided
+        for update in updates:
+            if "name" not in update or not update["name"]:
+                update["name"] = "Alex"
         bulk_update_users(updates)
         return {"message": "Users updated successfully"}
     except Exception as e:

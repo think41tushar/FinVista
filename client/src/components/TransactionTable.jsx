@@ -1,13 +1,21 @@
-import { useState, useRef } from 'react';
-import { mockTransactions, getTransactionColumns } from '../data/mockTransactions';
+import { useRef } from 'react';
 import useTransactionStore from '../store/transactionStore';
 
 const TransactionTable = () => {
-  const [transactions] = useState(mockTransactions);
-  const columns = getTransactionColumns();
+  const { transactions, loading, error, toggleTransaction, isSelected } = useTransactionStore();
   const tableRef = useRef(null);
-  
-  const { toggleTransaction, isSelected } = useTransactionStore();
+
+  // Define columns based on API response structure
+  const columns = [
+    { key: 'date', label: 'Date', width: '120px' },
+    { key: 'narration', label: 'Description', width: '300px' },
+    { key: 'withdrawn', label: 'Withdrawn', width: '120px' },
+    { key: 'deposit', label: 'Deposit', width: '120px' },
+    { key: 'closing_balance', label: 'Balance', width: '120px' },
+    { key: 'type', label: 'Type', width: '80px' },
+    { key: 'tags', label: 'Tags', width: '150px' },
+    { key: 'remarks', label: 'Remarks', width: '200px' }
+  ];
 
   const formatCurrency = (amount) => {
     if (amount === null || amount === undefined) return '-';
@@ -54,12 +62,12 @@ const TransactionTable = () => {
       case 'date':
         return <span className="table-cell">{formatDate(value)}</span>;
       case 'withdrawn':
-      case 'deposited':
-      case 'closingBalance':
+      case 'deposit':
+      case 'closing_balance':
         return (
           <span className={`font-medium ${
             column.key === 'withdrawn' && value ? 'debit-text' :
-            column.key === 'deposited' && value ? 'credit-text' :
+            column.key === 'deposit' && value ? 'credit-text' :
             'table-cell'
           }`}>
             {formatCurrency(value)}
@@ -68,7 +76,7 @@ const TransactionTable = () => {
       case 'type':
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            value === 'Credit' ? 'credit-badge' : 'debit-badge'
+            value === 'BANK' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
           }`}>
             {value}
           </span>
@@ -80,12 +88,29 @@ const TransactionTable = () => {
           </div>
         );
       case 'remarks':
-      case 'settlements':
+        return <ScrollableCell content={value} maxHeight="80px" />;
+      case 'narration':
         return <ScrollableCell content={value} maxHeight="80px" />;
       default:
         return <span className="table-cell">{value}</span>;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-red-600">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full overflow-hidden transaction-table rounded-2xl">
@@ -116,9 +141,9 @@ const TransactionTable = () => {
               <tr
                 key={transaction.id}
                 className={`table-row border-b ${
-                  isSelected(transaction.srNo) ? 'selected' : ''
+                  isSelected(transaction.id) ? 'selected' : ''
                 }`}
-                onClick={() => toggleTransaction(transaction.srNo)}
+                onClick={() => toggleTransaction(transaction.id)}
               >
                 {columns.map((column) => (
                   <td
