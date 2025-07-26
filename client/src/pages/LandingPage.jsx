@@ -2,19 +2,19 @@ import { Link } from 'react-router-dom';
 
 export default function LandingPage() {
   return (
-    <section className="relative isolate overflow-hidden bg-gradient-to-br from-[#0e1238] via-[#172057] to-[#1e2d73] text-white min-h-screen">
+    <section className="relative isolate overflow-hidden text-white min-h-screen" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
       {/* Light Grid Texture */}
       <div className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] bg-repeat opacity-10" />
       
       {/* Aurora Accent */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-lime-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ backgroundColor: 'rgba(27, 156, 133, 0.15)' }} />
       
       {/* Main container */}
       <div className="relative mx-auto flex max-w-7xl flex-col items-center px-6 py-24 sm:py-28 lg:flex-row lg:justify-between lg:gap-8 lg:py-32">
         <div className="flex flex-col lg:max-w-xl">
           {/* Headline */}
           <h1 className="mb-6 max-w-xl text-center font-sans text-4xl font-semibold leading-tight sm:text-5xl lg:mb-8 lg:text-left">
-            See the <span className="text-lime-400">full picture</span> of your finances in one glance with <span className="text-lime-400">FinVista</span>
+            See the <span style={{ color: 'var(--color-accent)' }}>full picture</span> of your finances in one glance with <span style={{ color: 'var(--color-accent)' }}>FinVista</span>
           </h1>
           
           {/* Sub-headline */}
@@ -24,7 +24,7 @@ export default function LandingPage() {
           
           {/* Calls to action */}
           <div className="flex gap-4 justify-center lg:justify-start">
-            <Link to="/login" className="inline-flex items-center justify-center rounded-md bg-lime-400 px-6 py-3 font-medium text-slate-900 shadow hover:bg-lime-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400">
+            <Link to="/login" className="inline-flex items-center justify-center rounded-md px-6 py-3 font-medium shadow transition-colors" style={{ backgroundColor: 'var(--color-accent)', color: 'var(--color-white)' }} onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--color-accent-light)'} onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--color-accent)'}>
               Try FinVista free
             </Link>
             <a href="#feature-tour" className="inline-flex items-center justify-center rounded-md border border-slate-500 px-6 py-3 font-medium text-slate-200 hover:bg-white/10">
@@ -46,7 +46,7 @@ export default function LandingPage() {
             </div>
             <div className="p-8 flex flex-col space-y-6">
               <div className="h-40 rounded-lg bg-gradient-to-r from-slate-800/60 to-slate-700/60 flex items-center justify-center">
-                <div className="text-lime-400 font-semibold">Financial Overview</div>
+                <div className="font-semibold" style={{ color: 'var(--color-accent)' }}>Financial Overview</div>
               </div>
               <div className="flex space-x-4">
                 <div className="h-24 w-1/2 rounded-lg bg-gradient-to-r from-slate-800/60 to-slate-700/60"></div>
@@ -61,14 +61,14 @@ export default function LandingPage() {
       {/* Features section */}
       <div id="feature-tour" className="relative mx-auto max-w-7xl px-6 py-16">
         <h2 className="text-center text-3xl font-semibold mb-16">
-          Powerful <span className="text-lime-400">financial tools</span> at your fingertips
+          Powerful <span style={{ color: 'var(--color-accent)' }}>financial tools</span> at your fingertips
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* Feature 1 */}
           <div className="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-slate-700/50">
-            <div className="w-12 h-12 rounded-full bg-lime-400/20 flex items-center justify-center mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(27, 156, 133, 0.2)' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" style={{ color: 'var(--color-accent)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
@@ -78,8 +78,8 @@ export default function LandingPage() {
           
           {/* Feature 2 */}
           <div className="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-slate-700/50">
-            <div className="w-12 h-12 rounded-full bg-lime-400/20 flex items-center justify-center mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(27, 156, 133, 0.2)' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" style={{ color: 'var(--color-accent)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
@@ -89,8 +89,8 @@ export default function LandingPage() {
           
           {/* Feature 3 */}
           <div className="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-slate-700/50">
-            <div className="w-12 h-12 rounded-full bg-lime-400/20 flex items-center justify-center mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(27, 156, 133, 0.2)' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" style={{ color: 'var(--color-accent)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>

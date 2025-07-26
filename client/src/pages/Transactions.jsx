@@ -17,19 +17,19 @@ const Transactions = () => {
   }, [user?.id, isAuthenticated, fetchUserData]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#0e1238] via-[#172057] to-[#1e2d73] text-white relative isolate">
+    <div className="h-screen flex flex-col text-white relative overflow-hidden" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
       {/* Light Grid Texture */}
       <div className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] bg-repeat opacity-10" />
       
       {/* Aurora Accent */}
-      <div className="pointer-events-none absolute left-1/3 top-1/3 -z-10 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-lime-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute left-1/3 top-1/3 -z-10 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ backgroundColor: 'rgba(27, 156, 133, 0.15)' }} />
       
-      <div className="flex flex-1 p-4 gap-4 h-[calc(100vh-64px)]">
-        <div className="w-2/3 rounded-xl backdrop-blur-sm bg-white/5 border border-slate-700/50 shadow-2xl p-4 overflow-hidden">
+      <div className="flex flex-1 p-4 gap-4 min-h-0">
+        <div className="w-2/3 rounded-xl backdrop-blur-sm shadow-2xl p-4 flex flex-col min-h-0" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-grey-dark)' }}>
           <TransactionTable />
         </div>
         
-        <div className="w-1/3 rounded-xl backdrop-blur-sm bg-white/5 border border-slate-700/50 shadow-2xl">
+        <div className="w-1/3 rounded-xl backdrop-blur-sm shadow-2xl flex flex-col min-h-0" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-grey-dark)' }}>
           <ChatInterface />
         </div>
       </div>

@@ -3,18 +3,22 @@
 
 /* Custom CSS Variables for Color Scheme */
 :root {
-  --color-bg-primary: #0e1238;
-  --color-bg-secondary: #172057;
-  --color-bg-tertiary: #1e2d73;
-  --color-accent: #a3e635; /* lime-400 */
-  --color-accent-light: #bef264; /* lime-300 */
-  --color-accent-dark: #84cc16; /* lime-500 */
-  --color-cream: #f1f5f9; /* slate-100 */
-  --color-white: #ffffff;
-  --color-grey-light: #94a3b8; /* slate-400 */
-  --color-grey-medium: #64748b; /* slate-500 */
-  --color-grey-dark: #334155; /* slate-700 */
+  --color-bg-primary: #1A1C1E;       /* Dark charcoal - cleaner finance look */
+  --color-bg-secondary: #232627;     /* Slightly lighter charcoal */
+  --color-bg-tertiary: #2C2F31;      /* Layered neutral dark grey */
+
+  --color-accent: #1B9C85;           /* Emerald green - finance friendly */
+  --color-accent-light: #4AD7B1;     /* Mint/seafoam green for soft highlights */
+  --color-accent-dark: #157d6e;      /* Deeper emerald for contrast/shadow */
+
+  --color-cream: #F1F5F9;            /* Keep for light elements / background */
+  --color-white: #FFFFFF;
+
+  --color-grey-light: #A0A0A0;       /* Soft neutral grey */
+  --color-grey-medium: #6E6E6E;      /* Mid grey for borders/text */
+  --color-grey-dark: #3C3C3C;        /* Almost-black grey for depth */
 }
+
 
 /* Global font family */
 * {
@@ -38,7 +42,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-orange);
+  background: var(--color-accent);
 }
 
 /* Custom styles for Pinterest-like cards */
@@ -94,7 +98,7 @@
 }
 
 .scrollable-cell:hover::-webkit-scrollbar-thumb:hover {
-  background: var(--color-orange);
+  background: var(--color-accent);
 }
 
 /* Table styling using CSS variables */
@@ -248,6 +252,6 @@
   transform: translateY(-50%);
   width: 4px;
   height: 4px;
-  background: var(--color-orange);
+  background: var(--color-accent);
   border-radius: 50%;
 }

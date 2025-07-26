@@ -111,19 +111,25 @@ const ConnectFiCard = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className='text-2xl font-bold text-slate-100'>Connect to Fi</h2>
+        <h2 className='text-2xl font-bold' style={{ color: 'var(--color-white)' }}>Connect to Fi</h2>
         {!connecting && !connected && (
           <button 
             onClick={handleConnect}
-            className="px-4 py-2 bg-lime-400 text-slate-900 rounded-md hover:bg-lime-300 transition-all"
+            className="px-4 py-2 rounded-md transition-all"
+            style={{
+              backgroundColor: 'var(--color-accent)',
+              color: 'var(--color-white)'
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--color-accent-light)'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--color-accent)'}
           >
             Connect
           </button>
         )}
         {connected && (
           <div className="flex items-center">
-            <div className="h-3 w-3 rounded-full bg-lime-400 mr-2 animate-pulse"></div>
-            <span className="text-lime-400 font-medium">Connected</span>
+            <div className="h-3 w-3 rounded-full mr-2 animate-pulse" style={{ backgroundColor: 'var(--color-accent)' }}></div>
+            <span className="font-medium" style={{ color: 'var(--color-accent)' }}>Connected</span>
           </div>
         )}
       </div>
@@ -131,7 +137,11 @@ const ConnectFiCard = () => {
       {(connecting || connected) && (
         <div 
           ref={terminalRef}
-          className="bg-slate-900/80 border border-slate-700/50 rounded-lg p-4 font-mono text-sm h-64 overflow-y-auto backdrop-blur-sm"
+          className="rounded-lg p-4 font-mono text-sm h-64 overflow-y-auto backdrop-blur-sm"
+          style={{
+            backgroundColor: 'var(--color-bg-tertiary)',
+            border: '1px solid var(--color-grey-dark)'
+          }}
           style={{ 
             boxShadow: 'inset 0 0 10px rgba(0,0,0,0.4)',
             textShadow: '0 0 5px rgba(163, 230, 53, 0.3)'
@@ -140,23 +150,26 @@ const ConnectFiCard = () => {
           {logs.map((log, index) => (
             <div 
               key={index} 
-              className={`mb-2 ${log.success ? 'text-lime-400' : log.error ? 'text-red-400' : 'text-slate-300'}`}
+              className="mb-2"
+              style={{
+                color: log.success ? 'var(--color-accent)' : log.error ? '#f87171' : 'var(--color-grey-light)'
+              }}
             >
               {log.text}
             </div>
           ))}
           {connecting && (
-            <div className="text-slate-300">
+            <div style={{ color: 'var(--color-grey-light)' }}>
               {typingText}
-              <span className={`${showCursor ? 'opacity-100' : 'opacity-0'} ml-0.5 text-lime-400 font-bold`}>▋</span>
+              <span className={`${showCursor ? 'opacity-100' : 'opacity-0'} ml-0.5 font-bold`} style={{ color: 'var(--color-accent)' }}>▋</span>
             </div>
           )}
           {connected && (
             <div className="mt-4">
-              <div className="text-lime-400 mb-1">$ Fi services ready</div>
+              <div className="mb-1" style={{ color: 'var(--color-accent)' }}>$ Fi services ready</div>
               <div className="flex items-center">
-                <span className="text-slate-400 mr-2">$</span>
-                <div className="h-4 w-2 bg-lime-400 animate-pulse"></div>
+                <span className="mr-2" style={{ color: 'var(--color-grey-medium)' }}>$</span>
+                <div className="h-4 w-2 animate-pulse" style={{ backgroundColor: 'var(--color-accent)' }}></div>
               </div>
             </div>
           )}
@@ -165,9 +178,9 @@ const ConnectFiCard = () => {
       
       {connected && (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white/5 border border-slate-700/50 p-4 rounded-lg backdrop-blur-sm">
-            <h3 className="text-lg font-medium text-lime-400 mb-2">Account Summary</h3>
-            <div className="text-slate-300 text-sm">
+          <div className="p-4 rounded-lg backdrop-blur-sm" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-grey-dark)' }}>
+            <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--color-accent)' }}>Account Summary</h3>
+            <div className="text-sm" style={{ color: 'var(--color-grey-light)' }}>
               <div className="flex justify-between mb-1">
                 <span>Checking</span>
                 <span>$4,285.63</span>
@@ -183,20 +196,20 @@ const ConnectFiCard = () => {
             </div>
           </div>
           
-          <div className="bg-white/5 border border-slate-700/50 p-4 rounded-lg backdrop-blur-sm">
-            <h3 className="text-lg font-medium text-lime-400 mb-2">Recent Activity</h3>
-            <div className="text-slate-300 text-sm space-y-2">
+          <div className="p-4 rounded-lg backdrop-blur-sm" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-grey-dark)' }}>
+            <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--color-accent)' }}>Recent Activity</h3>
+            <div className="text-sm space-y-2" style={{ color: 'var(--color-grey-light)' }}>
               <div className="flex justify-between">
                 <span>Amazon</span>
-                <span className="text-red-400">-$67.95</span>
+                <span style={{ color: '#f87171' }}>-$67.95</span>
               </div>
               <div className="flex justify-between">
                 <span>Payroll</span>
-                <span className="text-green-400">+$2,750.00</span>
+                <span style={{ color: '#4ade80' }}>+$2,750.00</span>
               </div>
               <div className="flex justify-between">
                 <span>Starbucks</span>
-                <span className="text-red-400">-$5.45</span>
+                <span style={{ color: '#f87171' }}>-$5.45</span>
               </div>
             </div>
           </div>

@@ -22,6 +22,7 @@ const ChatInterface = () => {
     getSelectedArray, 
     getSelectedTransactions,
     clearSelection, 
+    deselectTransaction,
     queryAI, 
     fetchUserData,
     loading 
@@ -126,7 +127,7 @@ const ChatInterface = () => {
         <div className="flex items-center space-x-3">
           <div 
             className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, var(--color-orange), var(--color-orange-light))' }}
+            style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-light))' }}
           >
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -139,7 +140,7 @@ const ChatInterface = () => {
         </div>
       </div>
       
-      <div className="flex-1 overflow-auto p-4 space-y-4">
+      <div className="flex-1 overflow-auto p-4 space-y-4 min-h-0">
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
@@ -161,7 +162,7 @@ const ChatInterface = () => {
           <div className="flex justify-start">
             <div className="pinterest-card max-w-[85%] p-4 rounded-2xl chat-message-bot mr-4">
               <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2" style={{ borderColor: 'var(--color-accent)' }}></div>
                 <p className="text-sm">AI is thinking...</p>
               </div>
             </div>
@@ -190,8 +191,18 @@ const ChatInterface = () => {
           <div className="chat-input flex-1 rounded-xl px-4 py-3 transition-all min-h-[48px] flex items-center flex-wrap gap-2">
             {/* Selected transaction chips */}
             {selectedTransactions.map((transaction) => (
-              <span key={transaction.id} className="selected-chip">
+              <span key={transaction.id} className="selected-chip" style={{ paddingRight: '28px' }}>
                 #{transaction.id.slice(-8)}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deselectTransaction(transaction.id);
+                  }}
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs hover:text-red-400 transition-colors"
+                  style={{ color: 'var(--color-grey-light)' }}
+                >
+                  ×
+                </button>
               </span>
             ))}
             <input

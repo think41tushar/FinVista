@@ -18,7 +18,10 @@ function App() {
   }, [initializeAuth]);
 
   return (
-    <div className="flex flex-col min-w-screen min-h-screen">
+    <div 
+      className="flex flex-col min-w-screen min-h-screen" 
+      style={{ backgroundColor: 'var(--color-bg-primary)' }}
+    >
       <Router>
         <Routes>
           <Route path="/" element={
