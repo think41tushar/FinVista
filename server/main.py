@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from integrations.llm.initial_analyser import initialize_pipeline
 from integrations.llm.agentic import initialize_agents
-from routers import auth, transactions, relations, ai
+from routers import auth, transactions, relations, spendings, ai
 
 # Load environment variables from .env file
 load_dotenv()
@@ -39,4 +39,5 @@ def read_item(item_id: int, q: Union[str, None] = None):
 app.include_router(auth.router)
 app.include_router(transactions.router)
 app.include_router(relations.router)
+app.include_router(spendings.router)
 app.include_router(ai.router)
