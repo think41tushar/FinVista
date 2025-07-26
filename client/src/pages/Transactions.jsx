@@ -5,7 +5,6 @@ import TransactionTable from '../components/TransactionTable';
 const Transactions = () => {
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
-      <Navbar />
       
       <div className="flex flex-1 p-4 gap-4 h-[calc(100vh-88px)]">
         <div className="w-2/3 floating-container">

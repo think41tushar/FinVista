@@ -1,29 +1,36 @@
+import React from 'react'
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
 const Navbar = () => {
+
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
   return (
-    <nav 
-      className="border-b shadow-lg"
-      style={{ 
-        backgroundColor: 'var(--color-bg-secondary)', 
-        borderColor: 'var(--color-grey-dark)' 
-      }}
-    >
-      <div className="px-6 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white tracking-wide">
-            Fin<span style={{ color: 'var(--color-orange)' }}>Vista</span>
-          </h1>
-          <div className="flex items-center space-x-4">
-            <div 
-              className="w-8 h-8 rounded-full flex items-center justify-center" 
-              style={{ background: 'linear-gradient(135deg, var(--color-orange), var(--color-orange-light))' }}
-            >
-              <span className="text-white text-sm font-medium">U</span>
+    <nav className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <h1 className="text-xl font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>FinVista</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-700">{user?.email}</span>
+              <button
+                onClick={handleLogout}
+                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
-      </div>
-    </nav>
-  );
-};
+      </nav>
+  )
+}
 
-export default Navbar;
+export default Navbar
