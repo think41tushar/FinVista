@@ -1,6 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-import asyncio
 import sys
 import os
 
@@ -8,6 +7,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from integrations.llm.mutual_fund_pipeline import MutualFundPipeline
+from integrations.llm.stocks_pipeline import StockPipeline 
 
 router = APIRouter(prefix="/api/mutual-funds", tags=["mutual-funds"])
 
@@ -17,26 +17,22 @@ async def get_mutual_fund_analysis():
     Get comprehensive mutual fund portfolio analysis
     """
     try:
-        # Initialize the pipeline
         pipeline = MutualFundPipeline()
-        
-        # Get the analysis
         analysis_data = await pipeline.get_portfolio_analysis()
-        
+
         return JSONResponse(
             status_code=200,
             content={
                 "success": True,
                 "data": analysis_data,
-                "message": "Portfolio analysis retrieved successfully"
+                "message": "Mutual fund portfolio analysis retrieved successfully"
             }
         )
-        
     except Exception as e:
         print(f"Error in mutual fund analysis endpoint: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to retrieve portfolio analysis: {str(e)}"
+            detail=f"Failed to retrieve mutual fund portfolio analysis: {str(e)}"
         )
 
 @router.get("/holdings")
@@ -47,8 +43,7 @@ async def get_mutual_fund_holdings():
     try:
         pipeline = MutualFundPipeline()
         analysis_data = await pipeline.get_portfolio_analysis()
-        
-        # Return only holdings data
+
         return JSONResponse(
             status_code=200,
             content={
@@ -60,7 +55,6 @@ async def get_mutual_fund_holdings():
                 "message": "Holdings retrieved successfully"
             }
         )
-        
     except Exception as e:
         print(f"Error in holdings endpoint: {e}")
         raise HTTPException(
@@ -76,7 +70,7 @@ async def get_performance_metrics():
     try:
         pipeline = MutualFundPipeline()
         analysis_data = await pipeline.get_portfolio_analysis()
-        
+
         return JSONResponse(
             status_code=200,
             content={
@@ -90,7 +84,6 @@ async def get_performance_metrics():
                 "message": "Performance metrics retrieved successfully"
             }
         )
-        
     except Exception as e:
         print(f"Error in performance endpoint: {e}")
         raise HTTPException(
@@ -106,7 +99,7 @@ async def get_fund_classification():
     try:
         pipeline = MutualFundPipeline()
         analysis_data = await pipeline.get_portfolio_analysis()
-        
+
         return JSONResponse(
             status_code=200,
             content={
@@ -118,10 +111,33 @@ async def get_fund_classification():
                 "message": "Fund classification retrieved successfully"
             }
         )
-        
     except Exception as e:
         print(f"Error in classification endpoint: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve fund classification: {str(e)}"
+        )
+
+@router.get("/stock-analysis")
+async def get_stock_analysis_from_mutual_fund_route():
+    """
+    Get comprehensive stock portfolio analysis (from /api/mutual-funds route)
+    """
+    try:
+        pipeline = StockPipeline()
+        analysis_data = await pipeline.get_portfolio_analysis()
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": analysis_data,
+                "message": "Stock portfolio analysis retrieved successfully"
+            }
+        )
+    except Exception as e:
+        print(f"Error in stock analysis endpoint: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve stock portfolio analysis: {str(e)}"
         )
