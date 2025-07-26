@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import useTransactionStore from '../../store/transactionStore';
 import useAuthStore from '../../store/authStore';
-import TransactionSummary from './TransactionSummary';
 
 const SendIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -75,20 +74,32 @@ const ChatInterface = () => {
       const result = await queryAI(currentInputMessage, currentSelectedIds);
       
       if (result.success) {
+        // Ensure response is a string
+        let responseText = result.response;
+        if (typeof responseText !== 'string') {
+          responseText = JSON.stringify(responseText, null, 2);
+        }
+        
         // Add AI response to chat
         const botMessage = {
           id: Date.now() + 1,
-          text: result.response,
+          text: responseText,
           sender: 'bot'
         };
         setMessages(prev => [...prev, botMessage]);
         
-        // Refresh transaction and relation data
-        if (user?.id) {
-          await fetchUserData(user.id);
+        // Always refresh data after successful AI query to ensure UI is up-to-date
+        try {
+          if (user?.id) {
+            await fetchUserData(user.id);
+          }
+        } catch (refreshError) {
+          console.error('Error refreshing data after AI response:', refreshError);
+          // Don't show error to user, just log it
         }
       } else {
         // Handle error
+        console.error('AI query failed:', result.error);
         const errorMessage = {
           id: Date.now() + 1,
           text: `Sorry, I encountered an error: ${result.error}`,
@@ -97,6 +108,7 @@ const ChatInterface = () => {
         setMessages(prev => [...prev, errorMessage]);
       }
     } catch (error) {
+      console.error('Unexpected error in chat interface:', error);
       const errorMessage = {
         id: Date.now() + 1,
         text: 'Sorry, I encountered an unexpected error. Please try again.',
@@ -180,12 +192,6 @@ const ChatInterface = () => {
           backgroundColor: 'var(--color-bg-tertiary)'
         }}
       >
-        {/* Transaction context preview */}
-        {selectedTransactions.length > 0 && (
-          <div className="mb-3">
-            <TransactionSummary transactions={selectedTransactions} />
-          </div>
-        )}
         
         <div className="flex space-x-3">
           <div className="chat-input flex-1 rounded-xl px-4 py-3 transition-all min-h-[48px] flex items-center flex-wrap gap-2">
