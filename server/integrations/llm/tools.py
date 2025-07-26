@@ -14,6 +14,9 @@ from services.relation_service import (
     update_existing_relation as update_relation_service
 )
 
+import logging
+logger = logging.getLogger(__name__)
+
 # Transaction Management Tools
 def save_bulk_transactions(transactions: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
@@ -26,13 +29,16 @@ def save_bulk_transactions(transactions: List[Dict[str, Any]]) -> Dict[str, Any]
         Dict containing status and results
     """
     try:
+        logger.info("Saving bulk transactions...")
         transaction_ids = save_bulk_transactions_service(transactions)
+        logger.info("Transaction IDs: %s", transaction_ids)
         return {
             "status": "success",
             "message": f"Successfully saved {len(transactions)} transactions.",
             "transaction_ids": transaction_ids
         }
     except Exception as e:
+        logger.error("Error saving bulk transactions: %s", e)
         return {
             "status": "error",
             "message": str(e)
@@ -50,13 +56,18 @@ def update_single_transaction(transaction_id: str, updates: Dict[str, Any]) -> D
         Dict containing status and updated transaction
     """
     try:
+        logger.info("Updating single transaction...")
+        logger.info("Transaction ID: %s", transaction_id)
+        logger.info("Updates: %s", updates)
         updated_transaction = update_single_transaction_service(transaction_id, updates)
+        logger.info("Updated transaction: %s", updated_transaction)
         return {
             "status": "success",
             "message": f"Successfully updated transaction {transaction_id}.",
             "transaction": updated_transaction
         }
     except Exception as e:
+        logger.error("Error updating single transaction: %s", e)
         return {
             "status": "error",
             "message": str(e)
@@ -73,13 +84,17 @@ def bulk_update_transactions(updates: List[Dict[str, Any]]) -> Dict[str, Any]:
         Dict containing status and results
     """
     try:
+        logger.info("Bulk updating transactions...")
+        logger.info("Updates: %s", updates)
         results = bulk_update_transactions_service(updates)
+        logger.info("Results: %s", results)
         return {
             "status": "success",
             "message": f"Successfully updated {len(updates)} transactions.",
             "results": results
         }
     except Exception as e:
+        logger.error("Error bulk updating transactions: %s", e)
         return {
             "status": "error",
             "message": str(e)
@@ -95,7 +110,7 @@ def get_all_transactions() -> List[Dict[str, Any]]:
     try:
         return get_all_transactions_service()
     except Exception as e:
-        print(f"Error getting all transactions: {e}")
+        logger.error("Error getting all transactions: %s", e)
         return []
 
 # Relation Management Tools
@@ -141,6 +156,7 @@ def create_relation(source_id: str, target_id: str, relation_type: str,
             "relation": created_relation
         }
     except Exception as e:
+        logger.error("Error creating relation: %s", e)
         return {
             "status": "error",
             "message": str(e)
@@ -166,6 +182,7 @@ def update_relation(relation_id: str, updates: Dict[str, Any]) -> Dict[str, Any]
             "relation": updated_relation
         }
     except Exception as e:
+        logger.error("Error updating relation: %s", e)
         return {
             "status": "error",
             "message": str(e)
@@ -173,4 +190,24 @@ def update_relation(relation_id: str, updates: Dict[str, Any]) -> Dict[str, Any]
     
 
 def get_current_user_id() -> str:
-    return "lUtPijb4mCtdGrDwxGtq"
+    return "5qQv5bR5BB4BqTYj0Qna"
+
+
+def get_sample_transactions() -> List[Dict[str, Any]]:
+    """
+    Returns the sample transaction data used for initializing the database.
+    This provides a consistent set of transaction examples for testing and development.
+    
+    Returns:
+        List of sample transaction dictionaries
+    """
+    try:
+        logger.info("Fetching sample transactions...")
+        from scripts.init_database import SAMPLE_TRANSACTIONS
+        return SAMPLE_TRANSACTIONS
+    except Exception as e:
+        logger.error("Error fetching sample transactions: %s", e)
+        return {
+            "status": "error",
+            "message": f"Error fetching sample transactions: {str(e)}"
+        }

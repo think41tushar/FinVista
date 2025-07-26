@@ -85,7 +85,18 @@ def bulk_update_transactions(updates: list):
     batch = db.batch()
     now = datetime.utcnow()
     for update in updates:
-        txn_id = update.pop("id")
+        # Handle both id and transaction_id formats
+        if "id" in update:
+            txn_id = update.pop("id")
+        elif "transaction_id" in update:
+            txn_id = update.pop("transaction_id")
+            # If updates are nested inside an 'updates' field, extract them
+            if "updates" in update:
+                update = update["updates"]
+        else:
+            logger.error(f"Missing ID field in update: {update}")
+            continue
+            
         update["updated_at"] = now
         ref = db.collection(TXNS).document(txn_id)
         batch.update(ref, update)
