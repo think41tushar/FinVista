@@ -14,5 +14,5 @@ pnpm run dev
 
 ```
 uv pip install -r requirements.txt
-uvicorn server.main:app --reload
+python -m uvicorn server.main:app --reload
 ```
