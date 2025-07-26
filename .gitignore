@@ -8,3 +8,6 @@ server/utils/firebase_cred.json
 .env
 **/.env
 server/.env
+__pycache__
+server/utils/firebase_cred.json
+server/.venv
