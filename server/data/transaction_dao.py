@@ -1,10 +1,16 @@
 from .firebase_client import db
-from datetime import datetime
+from datetime import datetime, time, date
 import logging
 
 logger = logging.getLogger(__name__)
 
 TXNS = "transactions"
+
+def convert_dates_to_datetimes(data: dict) -> dict:
+    for key, value in data.items():
+        if isinstance(value, date) and not isinstance(value, datetime):
+            data[key] = datetime.combine(value, time.min)
+    return data
 
 def batch_create(transactions: list):
     logger.info("Creating transactions")
@@ -20,9 +26,11 @@ def batch_create(transactions: list):
         logger.info("Ref %s", ref)
         data = t.dict()
         logger.info("Data %s", data)
-        data.update({"closing_balance": t.deposit - t.withdrawn,
-                     "created_at": now,
-                     "updated_at": now})
+        data.update({
+            "closing_balance": t.deposit - t.withdrawn,
+            "created_at": now,
+            "updated_at": now
+        })
         batch.set(ref, data)
         refs.append(ref.id)
     logger.info("Refs %s", refs)

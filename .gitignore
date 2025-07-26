@@ -1,6 +1,8 @@
 */__pycache__
+*/*/__pycache__
 server/my_env
 client/pnpm-lock.yaml
 server/.env
 __pycache__
 server/utils/firebase_cred.json
+server/.venv

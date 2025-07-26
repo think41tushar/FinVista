@@ -1,68 +1,271 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+
+/* Custom CSS Variables for Color Scheme */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --color-bg-primary: #1a1a1a;
+  --color-bg-secondary: #2a2a2a;
+  --color-bg-tertiary: #333333;
+  --color-orange: #FF7A30;
+  --color-orange-light: #FF8A45;
+  --color-orange-dark: #E56A20;
+  --color-cream: #E9E3DF;
+  --color-white: #ffffff;
+  --color-grey-light: #666666;
+  --color-grey-medium: #555555;
+  --color-grey-dark: #444444;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* Global font family */
+* {
+  font-family: 'JetBrains Mono', monospace;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+/* Minimal thin scrollbars */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+  border-radius: 2px;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+::-webkit-scrollbar-thumb {
+  background: var(--color-grey-medium);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-orange);
+}
+
+/* Custom styles for Pinterest-like cards */
+.pinterest-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 16px;
+}
+
+.pinterest-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* Floating containers */
+.floating-container {
+  background-color: var(--color-bg-secondary);
+  border-radius: 16px;
+  border: 1px solid var(--color-grey-dark);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+/* Table cell scrollbar - hidden by default */
+.scrollable-cell {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.scrollable-cell::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Show minimal scrollbar on hover */
+.scrollable-cell:hover {
+  scrollbar-width: thin; /* Firefox */
+  -ms-overflow-style: auto; /* Internet Explorer 10+ */
+}
+
+.scrollable-cell:hover::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollable-cell:hover::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+  border-radius: 2px;
+}
+
+.scrollable-cell:hover::-webkit-scrollbar-thumb {
+  background: var(--color-grey-medium);
+  border-radius: 2px;
+}
+
+.scrollable-cell:hover::-webkit-scrollbar-thumb:hover {
+  background: var(--color-orange);
+}
+
+/* Table styling using CSS variables */
+.transaction-table {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-cream);
+}
+
+.table-header {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-white);
+  border-bottom: 1px solid var(--color-grey-dark);
+}
+
+.table-row {
+  background-color: var(--color-bg-secondary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  border-radius: 0;
+  margin: 0;
+  position: relative;
+  z-index: 1;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+.table-row:nth-child(even) {
+  background-color: var(--color-bg-secondary);
+}
+
+.table-row:nth-child(odd) {
+  background-color: rgba(255, 122, 48, 0.015);
+}
+
+.table-row:hover {
+  background-color: rgba(255, 122, 48, 0.03);
+  z-index: 2;
+}
+
+.table-row.selected {
+  background: linear-gradient(135deg, rgba(255, 122, 48, 0.08), rgba(233, 227, 223, 0.04));
+  z-index: 10;
+  position: relative;
+}
+
+.table-row.selected::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 4px;
+  right: 8px;
+  bottom: 4px;
+  background: linear-gradient(135deg, rgba(255, 122, 48, 0.12), rgba(233, 227, 223, 0.06));
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.12),
+    0 4px 10px rgba(255, 122, 48, 0.08),
+    0 0 0 1px rgba(255, 122, 48, 0.12);
+  z-index: -1;
+  transform: translateY(-2px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.table-row.selected:hover::before {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 12px 35px rgba(0, 0, 0, 0.15),
+    0 6px 15px rgba(255, 122, 48, 0.12),
+    0 0 0 1px rgba(255, 122, 48, 0.18);
+}
+
+.table-cell {
+  border-color: var(--color-grey-dark);
+  color: var(--color-cream);
+}
+
+.credit-text {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.debit-text {
+  color: #f87171;
+  font-weight: 600;
+}
+
+.credit-badge {
+  background-color: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.debit-badge {
+  background-color: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.tag-chip {
+  background-color: rgba(255, 122, 48, 0.1);
+  color: var(--color-orange);
+  border: 1px solid rgba(255, 122, 48, 0.2);
+  font-weight: 500;
+}
+
+/* Chat styling */
+.chat-container {
+  background-color: var(--color-bg-secondary);
+}
+
+.chat-message-user {
+  background: linear-gradient(135deg, var(--color-orange), var(--color-orange-light));
+  color: var(--color-white);
+}
+
+.chat-message-bot {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-cream);
+  border: 1px solid var(--color-grey-dark);
+}
+
+.chat-input {
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-grey-dark);
+  color: var(--color-white);
+}
+
+.chat-input:focus {
+  border-color: var(--color-orange);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 122, 48, 0.2);
+}
+
+.chat-button {
+  background: linear-gradient(135deg, var(--color-orange), var(--color-orange-light));
+  color: var(--color-white);
+}
+
+.chat-button:hover {
+  background: linear-gradient(135deg, var(--color-orange-light), var(--color-orange));
+  transform: scale(1.05);
+}
+
+.chat-button:disabled {
+  background: var(--color-grey-medium);
+  color: var(--color-grey-light);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Selected transaction chips in chat input */
+.selected-chip {
+  background: linear-gradient(135deg, rgba(233, 227, 223, 0.15), rgba(255, 122, 48, 0.08));
+  color: var(--color-cream);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 4px 10px 4px 16px;
+  border-radius: 16px;
+  margin: 0 3px;
+  display: inline-block;
+  border: 1px solid rgba(233, 227, 223, 0.2);
+  backdrop-filter: blur(4px);
+  position: relative;
+}
+
+.selected-chip::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--color-orange);
+  border-radius: 50%;
 }
