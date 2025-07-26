@@ -14,16 +14,106 @@ const useTransactionStore = create(
   selectedTransactions: new Set(),
   
   // Add a transaction to selection
-  selectTransaction: (srNo) => set((state) => {
+  getRelatedTransactionsRecursively: (transactionId, visited = new Set()) => {
+    const { relations } = get();
+    
+    // Avoid infinite loops
+    if (visited.has(transactionId)) {
+      return new Set();
+    }
+    visited.add(transactionId);
+    
+    const relatedIds = new Set([transactionId]);
+    
+    // Find the relation for this transaction
+    const relation = relations.find(rel => 
+      rel.primary_transaction === transactionId || 
+      rel.related_transactions.includes(transactionId)
+    );
+    
+    if (relation) {
+      // Add all related transactions
+      relation.related_transactions.forEach(relId => {
+        relatedIds.add(relId);
+        // Recursively get related transactions
+        const nestedRelated = get().getRelatedTransactionsRecursively(relId, visited);
+        nestedRelated.forEach(id => relatedIds.add(id));
+      });
+    }
+    
+    return relatedIds;
+  },
+
+  isTransactionRelated: (transactionId) => {
+    const { relations } = get();
+    
+    // Check if this transaction appears in any relation's related_transactions
+    return relations.some(relation => 
+      relation.related_transactions.includes(transactionId)
+    );
+  },
+
+  // Create a map of transaction types for better performance
+  getTransactionTypesMap: () => {
+    const { relations, transactions } = get();
+    const typesMap = new Map();
+    
+    // First, set all transactions as direct
+    transactions.forEach(transaction => {
+      typesMap.set(transaction.id, 'direct');
+    });
+    
+    // Then mark all related transactions
+    relations.forEach(relation => {
+      relation.related_transactions.forEach(transId => {
+        typesMap.set(transId, 'related');
+      });
+    });
+    
+    return typesMap;
+  },
+
+  // Get settlement notes map
+  getSettlementNotesMap: () => {
+    const { relations } = get();
+    const notesMap = new Map();
+    
+    relations.forEach(relation => {
+      if (relation.settlement_notes) {
+        // Add settlement note for all related transactions
+        relation.related_transactions.forEach(transId => {
+          notesMap.set(transId, relation.settlement_notes);
+        });
+      }
+    });
+    
+    return notesMap;
+  },
+
+  // Add a transaction and all its related transactions to selection
+  selectTransaction: (transactionId) => set((state) => {
+    const { getRelatedTransactionsRecursively } = get();
     const newSelected = new Set(state.selectedTransactions);
-    newSelected.add(srNo);
+    
+    // Get all related transactions recursively
+    const relatedIds = getRelatedTransactionsRecursively(transactionId);
+    
+    // Add all related transactions to selection
+    relatedIds.forEach(id => newSelected.add(id));
+    
     return { selectedTransactions: newSelected };
   }),
   
-  // Remove a transaction from selection
-  deselectTransaction: (srNo) => set((state) => {
+  deselectTransaction: (transactionId) => set((state) => {
+    const { getRelatedTransactionsRecursively } = get();
     const newSelected = new Set(state.selectedTransactions);
-    newSelected.delete(srNo);
+    
+    // Get all related transactions recursively
+    const relatedIds = getRelatedTransactionsRecursively(transactionId);
+    
+    // Remove all related transactions from selection
+    relatedIds.forEach(id => newSelected.delete(id));
+    
     return { selectedTransactions: newSelected };
   }),
   

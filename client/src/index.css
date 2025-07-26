@@ -132,12 +132,12 @@
 }
 
 .table-row:hover {
-  background-color: rgba(255, 122, 48, 0.03);
+  background-color: rgba(52,187,156, 0.15);
   z-index: 2;
 }
 
 .table-row.selected {
-  background: linear-gradient(135deg, rgba(255, 122, 48, 0.08), rgba(233, 227, 223, 0.04));
+  background: linear-gradient(135deg, rgba(52,187,156, 0.9), rgba(52,187,156, 0.2));
   z-index: 10;
   position: relative;
 }
@@ -145,9 +145,9 @@
 .table-row.selected:hover::before {
   transform: translateY(-3px);
   box-shadow: 
-    0 12px 35px rgba(0, 0, 0, 0.15),
-    0 6px 15px rgba(255, 122, 48, 0.12),
-    0 0 0 1px rgba(255, 122, 48, 0.18);
+    0 12px 35px rgba(52,187,156, 0.15),
+    0 6px 15px rgba(52,187,156, 0.08),
+    0 0 0 1px rgba(52,187,156, 0.18);
 }
 
 .table-cell {
@@ -178,9 +178,9 @@
 }
 
 .tag-chip {
-  background-color: rgba(255, 122, 48, 0.1);
+  background-color: rgba(22, 151, 121, 0.1);
   color: var(--color-orange);
-  border: 1px solid rgba(255, 122, 48, 0.2);
+  border: 1px solid rgba(68, 252, 209, 0.2);
   font-weight: 500;
 }
 
