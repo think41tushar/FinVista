@@ -1,5 +1,6 @@
 from .firebase_client import db
 from datetime import datetime, time, date
+from google.cloud import firestore
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ def batch_create(transactions: list):
         logger.info("Ref %s", ref)
         data = t.dict()
         logger.info("Data %s", data)
+        data = convert_dates_to_datetimes(data)
         data.update({
             "closing_balance": t.deposit - t.withdrawn,
             "created_at": now,
@@ -57,3 +59,20 @@ def get_all_transactions():
     docs = db.collection(TXNS).stream()
     logger.info("Docs %s", docs)
     return [{**d.to_dict(), "id": d.id} for d in docs]
+
+def get_transactions_by_user_id(user_id: str):
+    logger.info("Getting transactions by user_id %s", user_id)
+    docs = db.collection(TXNS).where("user_id", "==", user_id).stream()
+    return [{**d.to_dict(), "id": d.id} for d in docs]
+
+def bulk_update_transactions(updates: list):
+    logger.info("Bulk updating transactions")
+    batch = db.batch()
+    now = datetime.utcnow()
+    for update in updates:
+        txn_id = update.pop("id")
+        update["updated_at"] = now
+        ref = db.collection(TXNS).document(txn_id)
+        batch.update(ref, update)
+    batch.commit()
+    logger.info("Bulk update completed")
