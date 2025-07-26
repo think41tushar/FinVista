@@ -21,11 +21,11 @@ class QueryRequest(BaseModel):
 
 
 @router.post("/run-initial-pipeline")
-async def run_initial_pipeline():
+async def run_initial_pipeline(user_id: str):
     """Endpoint to trigger the initial data cleaning and tagging pipeline."""
     try:
         # Initialize the pipeline runner and session
-        current_runner, session = await initialize_pipeline()
+        current_runner, session = await initialize_pipeline(user_id)
         if not current_runner or not session:
             raise HTTPException(status_code=500, detail="Initial pipeline runner or session not available.")
         

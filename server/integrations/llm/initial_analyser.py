@@ -39,7 +39,7 @@ def create_transaction_fetcher_agent(mcp_tools: list):
         model="gemini-2.5-flash",
         description="Fetches financial transactions from MCP or sample data.",
         instruction='''
-        1. Try to fetch 5 latest transactions from the MCP using the available MCP tools ( specifically use fetch_bank_transactions tool only ).
+        1. Try to fetch 5 latest transactions from the MCP using the available MCP tools ( specifically use fetch_bank_transactions tool ).
         2. If the MCP fails or no MCP tools are available.
         3. Return the raw transaction data without any processing.
         4. Ensure the data is properly formatted for the next agent in the pipeline.
@@ -49,8 +49,12 @@ def create_transaction_fetcher_agent(mcp_tools: list):
         tools=mcp_tools
     )
 
-def create_user_id_fetcher_agent():
+def create_user_id_fetcher_agent(user_id: str):
     """Agent 2: Fetches current user ID using gemini-2.5-flash."""
+    # Create a wrapper function that captures the user_id and returns it when called
+    def get_user_id_wrapper():
+        return get_current_user_id(user_id)
+        
     return Agent(
         name="user_id_fetcher",
         model="gemini-2.5-flash",
@@ -67,7 +71,7 @@ def create_user_id_fetcher_agent():
            - Return the user_id in a clear format for use by subsequent agents
            - This user_id will be used to associate all transactions with the correct user
         ''',
-        tools=[Tool(get_current_user_id)]
+        tools=[Tool(get_user_id_wrapper)]
     )
 
 def create_data_cleaner_agent():
@@ -128,8 +132,10 @@ def create_data_cleaner_agent():
         tools=[Tool(save_bulk_transactions)]
     )
 
-def create_data_tagger_agent():
+def create_data_tagger_agent(user_id: str):
     """Agent 4: Tags transactions with categories using gemini-2.5-pro."""
+    def get_user_id_wrapper():
+        return get_current_user_id(user_id)
     return Agent(
         name="data_tagger",
         model="gemini-2.5-pro",
@@ -178,11 +184,11 @@ def create_data_tagger_agent():
         tools=[
             Tool(get_all_transactions),
             Tool(bulk_update_transactions),
-            Tool(get_current_user_id)
+            Tool(get_user_id_wrapper)
         ]
     )
 
-async def create_four_agent_pipeline():
+async def create_four_agent_pipeline(user_id: str):
     """Creates the sequential agent pipeline with 4 specialized agents."""
     try:
         mcp_tools = await initialiseFiMCP()
@@ -193,9 +199,9 @@ async def create_four_agent_pipeline():
         
     # Create all 4 agents
     transaction_fetcher = create_transaction_fetcher_agent(mcp_tools)
-    user_id_fetcher = create_user_id_fetcher_agent()
+    user_id_fetcher = create_user_id_fetcher_agent(user_id)
     data_cleaner = create_data_cleaner_agent()
-    data_tagger = create_data_tagger_agent()
+    data_tagger = create_data_tagger_agent(user_id)
     
     # Create sequential pipeline
     return SequentialAgent(
@@ -208,11 +214,11 @@ async def create_four_agent_pipeline():
 pipeline = None
 runner = None
 
-async def initialize_pipeline():
+async def initialize_pipeline(User_id: str):
     """Initializes the 4-agent pipeline and runner asynchronously."""
     global pipeline, runner
     if pipeline is None:
-        pipeline = await create_four_agent_pipeline()
+        pipeline = await create_four_agent_pipeline(User_id)
         session_service = InMemorySessionService()
         runner = Runner(
             agent=pipeline,
