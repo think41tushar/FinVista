@@ -15,4 +15,5 @@ pnpm run dev
 ```
 uv pip install -r requirements.txt
 python -m uvicorn server.main:app --reload
+python scripts/init_database.py
 ```
