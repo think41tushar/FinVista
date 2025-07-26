@@ -4,10 +4,12 @@ import LinkModal from './LinkModal'
 import fiLogo from "../../assets/fi-logo.png"
 import { BASE_URL } from '../../utils/settings'
 import { useNavigate } from 'react-router-dom'
+import useAuthStore from '../../store/authStore'
 
 const ConnectFiCard = () => {
 
     const navigate = useNavigate()
+    const { user } = useAuthStore()
     const [loading, setLoading] = useState(false)
     const [url, setUrl] = useState("")
     const [modal, setModal] = useState(false)
@@ -41,7 +43,7 @@ const ConnectFiCard = () => {
     const handleFiClick = async () => {
         setLoading(true)
         try{
-            const response = await axios.post(`${BASE_URL}/ai/run-initial-pipeline`)
+            const response = await axios.post(`${BASE_URL}/ai/run-initial-pipeline?user_id=${user.id}`)
             const loginUrl = extractLoginUrl(response.data.result);
             const hasTxnsArray = checkTxnsArray(response.data.result)
             if(loginUrl){

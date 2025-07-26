@@ -49,8 +49,12 @@ def create_transaction_fetcher_agent(mcp_tools: list):
         tools=mcp_tools
     )
 
-def create_user_id_fetcher_agent():
+def create_user_id_fetcher_agent(user_id: str):
     """Agent 2: Fetches current user ID using gemini-2.5-flash."""
+    # Create a wrapper function that captures the user_id and returns it when called
+    def get_user_id_wrapper():
+        return get_current_user_id(user_id)
+        
     return Agent(
         name="user_id_fetcher",
         model="gemini-2.5-flash",
@@ -67,7 +71,7 @@ def create_user_id_fetcher_agent():
            - Return the user_id in a clear format for use by subsequent agents
            - This user_id will be used to associate all transactions with the correct user
         ''',
-        tools=[Tool(get_current_user_id)]
+        tools=[Tool(get_user_id_wrapper)]
     )
 
 def create_data_cleaner_agent():
@@ -104,29 +108,34 @@ def create_data_cleaner_agent():
                 "amount": 248.0,
                 "narration": "UPI-ALIENKIND PRIVATE",
                 "date": "2025-07-24T00:00:00",
-                "type": "DEBIT",
+                "type": "DIRECT",
                 "mode": "OTHERS",
-                "balance": 8242.88
+                "balance": 8242.88,
+                "processed": "unprocessed"
             },
             {
                 "user_id": "user_123",
                 "amount": 6000.0,
                 "narration": "UPI-KISHOR R JADHAV",
                 "date": "2025-07-22T00:00:00",
-                "type": "CREDIT",
+                "type": "DIRECT",
                 "mode": "OTHERS",
-                "balance": 11560.88
+                "balance": 11560.88,
+                "processed": "unprocessed"
             }
         ]
         ```
         
         6. Confirm successful storage and pass the transaction count to the next agent.
+        7. Strictly add "processed": "unprocessed" to each transaction and strictly add type as "DIRECT".
         ''',
         tools=[Tool(save_bulk_transactions)]
     )
 
-def create_data_tagger_agent():
+def create_data_tagger_agent(user_id: str):
     """Agent 4: Tags transactions with categories using gemini-2.5-pro."""
+    def get_user_id_wrapper():
+        return get_current_user_id(user_id)
     return Agent(
         name="data_tagger",
         model="gemini-2.5-pro",
@@ -145,8 +154,7 @@ def create_data_tagger_agent():
         
         5. For each transaction, perform intelligent analysis:
            - Analyze the 'narration' and 'mode' fields to determine the most appropriate category
-           - For UPI transactions, extract merchant names from the narration (e.g., 'UPI-MERCHANTNAME' → 'MERCHANTNAME')
-           - Standardize transaction types to: 'CREDIT', 'DEBIT', or 'TRANSFER'
+           - For UPI transactions, extract merchant names from the narration (e.g., 'UPI-MERCHANTNAME' or 'UPI MERCHANTNAME' → 'MERCHANTNAME')
            - Add relevant tags based on transaction patterns (e.g., 'recurring', 'refund', 'online', 'grocery', 'fuel', 'entertainment')
            - Categorize transactions into meaningful groups (e.g., 'FOOD_DINING', 'TRANSPORTATION', 'UTILITIES', 'SHOPPING', 'INCOME', etc.)
            - Preserve all original transaction data while adding/updating fields
@@ -161,7 +169,8 @@ def create_data_tagger_agent():
                        "category": "standardized_category",
                        "merchant": "extracted_merchant_name",
                        "tags": ["relevant", "tags"],
-                       "type": "standardized_type"
+                       "type": "standardized_type",
+                       "processed": "analyzed"
                    }
                }
            ]
@@ -169,16 +178,17 @@ def create_data_tagger_agent():
         
         7. For ambiguous transactions, use 'UNCATEGORIZED' rather than guessing.
         8. Maintain consistency by using standard naming for similar transactions.
-        9. Provide a summary of the tagging results.
+        9. Directly return the return without any additional summarization and text after the response from bulk_update_transactions tool.
+        10. Strictly add "processed": "analyzed" to each transaction.
         ''',
         tools=[
             Tool(get_all_transactions),
             Tool(bulk_update_transactions),
-            Tool(get_current_user_id)
+            Tool(get_user_id_wrapper)
         ]
     )
 
-async def create_four_agent_pipeline():
+async def create_four_agent_pipeline(user_id: str):
     """Creates the sequential agent pipeline with 4 specialized agents."""
     try:
         mcp_tools = await initialiseFiMCP()
@@ -189,9 +199,9 @@ async def create_four_agent_pipeline():
         
     # Create all 4 agents
     transaction_fetcher = create_transaction_fetcher_agent(mcp_tools)
-    user_id_fetcher = create_user_id_fetcher_agent()
+    user_id_fetcher = create_user_id_fetcher_agent(user_id)
     data_cleaner = create_data_cleaner_agent()
-    data_tagger = create_data_tagger_agent()
+    data_tagger = create_data_tagger_agent(user_id)
     
     # Create sequential pipeline
     return SequentialAgent(
@@ -204,11 +214,11 @@ async def create_four_agent_pipeline():
 pipeline = None
 runner = None
 
-async def initialize_pipeline():
+async def initialize_pipeline(User_id: str):
     """Initializes the 4-agent pipeline and runner asynchronously."""
     global pipeline, runner
     if pipeline is None:
-        pipeline = await create_four_agent_pipeline()
+        pipeline = await create_four_agent_pipeline(User_id)
         session_service = InMemorySessionService()
         runner = Runner(
             agent=pipeline,

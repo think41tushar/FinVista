@@ -202,13 +202,16 @@ def update_relation(relation_id: str, updates: Dict[str, Any]) -> Dict[str, Any]
         }
     
 
-def get_current_user_id() -> str:
-    """Get the current user ID from the request context."""
-    global _current_user_id
-    if _current_user_id is not None:
-        return _current_user_id
-    # Fallback to hardcoded value for backward compatibility
-    return "5qQv5bR5BB4BqTYj0Qna"
+def get_current_user_id(user_id: str) -> str:
+    """Get the current user ID from the request context.
+    
+    Args:
+        user_id: The user ID to return
+        
+    Returns:
+        The user ID
+    """
+    return user_id
 
 
 def get_sample_transactions() -> List[Dict[str, Any]]:

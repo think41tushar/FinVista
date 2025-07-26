@@ -11,7 +11,7 @@ class TransactionIn(BaseModel):
     type: str
     tags: List[str] = []
     remarks: Optional[str] = None
-    processed: bool = False
+    processed: str = ""
 
 class Transaction(TransactionIn):
     id: str
