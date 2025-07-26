@@ -190,7 +190,7 @@ def update_relation(relation_id: str, updates: Dict[str, Any]) -> Dict[str, Any]
     
 
 def get_current_user_id() -> str:
-    return "5qQv5bR5BB4BqTYj0Qna"
+    return "xh3qtsQTd7yoUL1iDjVm"
 
 
 def get_sample_transactions() -> List[Dict[str, Any]]:

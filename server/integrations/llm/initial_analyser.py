@@ -39,7 +39,7 @@ def create_transaction_fetcher_agent(mcp_tools: list):
         model="gemini-2.5-flash",
         description="Fetches financial transactions from MCP or sample data.",
         instruction='''
-        1. Try to fetch 5 latest transactions from the MCP using the available MCP tools.
+        1. Try to fetch 5 latest transactions from the MCP using the available MCP tools ( specifically use fetch_bank_transactions tool only ).
         2. If the MCP fails or no MCP tools are available.
         3. Return the raw transaction data without any processing.
         4. Ensure the data is properly formatted for the next agent in the pipeline.
@@ -106,7 +106,8 @@ def create_data_cleaner_agent():
                 "date": "2025-07-24T00:00:00",
                 "type": "DEBIT",
                 "mode": "OTHERS",
-                "balance": 8242.88
+                "balance": 8242.88,
+                "processed": "unprocessed"
             },
             {
                 "user_id": "user_123",
@@ -115,12 +116,14 @@ def create_data_cleaner_agent():
                 "date": "2025-07-22T00:00:00",
                 "type": "CREDIT",
                 "mode": "OTHERS",
-                "balance": 11560.88
+                "balance": 11560.88,
+                "processed": "unprocessed"
             }
         ]
         ```
         
         6. Confirm successful storage and pass the transaction count to the next agent.
+        7. Strictly add "processed": "unprocessed" to each transaction.
         ''',
         tools=[Tool(save_bulk_transactions)]
     )
@@ -161,7 +164,8 @@ def create_data_tagger_agent():
                        "category": "standardized_category",
                        "merchant": "extracted_merchant_name",
                        "tags": ["relevant", "tags"],
-                       "type": "standardized_type"
+                       "type": "standardized_type",
+                       "processed": "analyzed"
                    }
                }
            ]
@@ -169,7 +173,8 @@ def create_data_tagger_agent():
         
         7. For ambiguous transactions, use 'UNCATEGORIZED' rather than guessing.
         8. Maintain consistency by using standard naming for similar transactions.
-        9. Provide a summary of the tagging results.
+        9. Directly return the return without any additional summarization and text after the response from bulk_update_transactions tool.
+        10. Strictly add "processed": "analyzed" to each transaction.
         ''',
         tools=[
             Tool(get_all_transactions),

@@ -69,9 +69,14 @@ def get_transactions_by_ids(ids: list):
     logger.info("Docs %s", docs)
     return [{**d.to_dict(), "id": d.id} for d in docs]
 
-def get_all_transactions():
+def get_all_transactions(processed_status=None):
     logger.info("Getting all transactions")
-    docs = db.collection(TXNS).stream()
+    collection = db.collection(TXNS)
+    
+    if processed_status is not None:
+        collection = collection.where('processed', '==', processed_status)
+    
+    docs = collection.stream()
     logger.info("Docs %s", docs)
     return [{**d.to_dict(), "id": d.id} for d in docs]
 
