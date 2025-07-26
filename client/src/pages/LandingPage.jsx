@@ -44,15 +44,16 @@ export default function LandingPage() {
               </div>
               <div className="text-xs text-slate-300 mx-auto">FinVista Dashboard</div>
             </div>
-            <div className="p-8 flex flex-col space-y-6">
-              <div className="h-40 rounded-lg bg-gradient-to-r from-slate-800/60 to-slate-700/60 flex items-center justify-center">
-                <div className="font-semibold" style={{ color: 'var(--color-accent)' }}>Financial Overview</div>
-              </div>
-              <div className="flex space-x-4">
-                <div className="h-24 w-1/2 rounded-lg bg-gradient-to-r from-slate-800/60 to-slate-700/60"></div>
-                <div className="h-24 w-1/2 rounded-lg bg-gradient-to-r from-slate-800/60 to-slate-700/60"></div>
-              </div>
-              <div className="h-32 rounded-lg bg-gradient-to-r from-slate-800/60 to-slate-700/60"></div>
+            <div className="p-4">
+              <img 
+                src="https://i.ibb.co/1f5ms6F0/A-highly-detailed-3-D-render-of-a-Fin-Vista-app-icon-for-a-website-styled-as-a-cinematic-3-D-model-w.jpg" 
+                alt="FinVista Dashboard Preview" 
+                className="w-full h-auto rounded-lg" 
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/fallback-dashboard.png';
+                }}
+              />
             </div>
           </div>
         </div>
