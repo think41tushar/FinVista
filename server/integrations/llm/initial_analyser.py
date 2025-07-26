@@ -104,7 +104,7 @@ def create_data_cleaner_agent():
                 "amount": 248.0,
                 "narration": "UPI-ALIENKIND PRIVATE",
                 "date": "2025-07-24T00:00:00",
-                "type": "DEBIT",
+                "type": "DIRECT",
                 "mode": "OTHERS",
                 "balance": 8242.88,
                 "processed": "unprocessed"
@@ -114,7 +114,7 @@ def create_data_cleaner_agent():
                 "amount": 6000.0,
                 "narration": "UPI-KISHOR R JADHAV",
                 "date": "2025-07-22T00:00:00",
-                "type": "CREDIT",
+                "type": "DIRECT",
                 "mode": "OTHERS",
                 "balance": 11560.88,
                 "processed": "unprocessed"
@@ -123,7 +123,7 @@ def create_data_cleaner_agent():
         ```
         
         6. Confirm successful storage and pass the transaction count to the next agent.
-        7. Strictly add "processed": "unprocessed" to each transaction.
+        7. Strictly add "processed": "unprocessed" to each transaction and strictly add type as "DIRECT".
         ''',
         tools=[Tool(save_bulk_transactions)]
     )
@@ -148,8 +148,7 @@ def create_data_tagger_agent():
         
         5. For each transaction, perform intelligent analysis:
            - Analyze the 'narration' and 'mode' fields to determine the most appropriate category
-           - For UPI transactions, extract merchant names from the narration (e.g., 'UPI-MERCHANTNAME' → 'MERCHANTNAME')
-           - Standardize transaction types to: 'CREDIT', 'DEBIT', or 'TRANSFER'
+           - For UPI transactions, extract merchant names from the narration (e.g., 'UPI-MERCHANTNAME' or 'UPI MERCHANTNAME' → 'MERCHANTNAME')
            - Add relevant tags based on transaction patterns (e.g., 'recurring', 'refund', 'online', 'grocery', 'fuel', 'entertainment')
            - Categorize transactions into meaningful groups (e.g., 'FOOD_DINING', 'TRANSPORTATION', 'UTILITIES', 'SHOPPING', 'INCOME', etc.)
            - Preserve all original transaction data while adding/updating fields
