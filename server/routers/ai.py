@@ -17,6 +17,7 @@ router = APIRouter(
 
 class QueryRequest(BaseModel):
     query: str
+    user_id: str = None  # Make user_id optional for backward compatibility
 
 
 @router.post("/run-initial-pipeline")
@@ -72,7 +73,7 @@ async def run_initial_pipeline():
 async def query_agent(request: QueryRequest):
     """Endpoint to process a user query through the main FinVista agent."""
     try:
-        response = await process_request(request.query)
+        response = await process_request(request.query, request.user_id)
         return {"status": "success", "response": response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -30,7 +30,7 @@ const Navbar = () => {
                   <span style={{ color: 'var(--color-cream)' }}>{user.name || user.email}</span>
                   <button
                     onClick={handleLogout}
-                    className="px-3 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors"
+                    className="px-3 py-2 rounded-md font-medium cursor-pointer transition-colors"
                     style={{ 
                       color: 'var(--color-grey-light)',
                       ':hover': { color: 'var(--color-accent)' }

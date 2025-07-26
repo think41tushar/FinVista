@@ -158,7 +158,7 @@ const useTransactionStore = create(
   },
 
   // Query AI with context and user message
-  queryAI: async (query, selectedTransactionIds = []) => {
+  queryAI: async (query, selectedTransactionIds = [], userId = null) => {
     // Don't set loading for AI queries - this prevents UI crashes
     set({ error: null });
     
@@ -187,9 +187,16 @@ const useTransactionStore = create(
         contextualQuery = `Context - Selected Transactions: ${JSON.stringify(transactionContext)}\n\nUser Query: ${query}`;
       }
 
-      const response = await axios.post(`${BASE_URL}/ai/query`, {
+      const requestBody = {
         query: contextualQuery
-      });
+      };
+      
+      // Only add user_id if it's provided
+      if (userId) {
+        requestBody.user_id = userId;
+      }
+
+      const response = await axios.post(`${BASE_URL}/ai/query`, requestBody);
 
       // Log the response for debugging
       console.log('AI Query Response:', response.data);

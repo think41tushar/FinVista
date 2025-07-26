@@ -71,7 +71,7 @@ const ChatInterface = () => {
     
     try {
       // Call AI API with context
-      const result = await queryAI(currentInputMessage, currentSelectedIds);
+      const result = await queryAI(currentInputMessage, currentSelectedIds, user?.id);
       
       if (result.success) {
         // Ensure response is a string
