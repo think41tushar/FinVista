@@ -17,7 +17,7 @@ const Transactions = () => {
   }, [user?.id, isAuthenticated, fetchUserData]);
 
   return (
-    <div className="h-screen flex flex-col text-white relative overflow-hidden" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+    <div className="h-[calc(100vh-66px)] flex flex-col text-white relative overflow-hidden" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
       {/* Light Grid Texture */}
       <div className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] bg-repeat opacity-10" />
       

@@ -159,7 +159,8 @@ const useTransactionStore = create(
 
   // Query AI with context and user message
   queryAI: async (query, selectedTransactionIds = []) => {
-    set({ loading: true, error: null });
+    // Don't set loading for AI queries - this prevents UI crashes
+    set({ error: null });
     
     try {
       // Get full transaction objects for the selected IDs
@@ -193,18 +194,65 @@ const useTransactionStore = create(
       // Log the response for debugging
       console.log('AI Query Response:', response.data);
 
-      set({ loading: false });
+      // Handle different response structures and extract actual text content
+      let aiResponse;
+      
+      // Check if response.data has the structure {status: 'success', response: {...}}
+      if (response.data.status === 'success' && response.data.response) {
+        if (typeof response.data.response === 'object') {
+          // Extract the actual text from the response object
+          if (response.data.response.response) {
+            // Structure: {status: 'success', response: {response: "actual text"}}
+            aiResponse = response.data.response.response;
+          } else if (response.data.response.text) {
+            // Structure: {status: 'success', response: {text: "actual text"}}
+            aiResponse = response.data.response.text;
+          } else if (response.data.response.message) {
+            // Structure: {status: 'success', response: {message: "actual text"}}
+            aiResponse = response.data.response.message;
+          } else {
+            // If no known text field, show the first string value found
+            const values = Object.values(response.data.response);
+            const textValue = values.find(val => typeof val === 'string');
+            aiResponse = textValue || JSON.stringify(response.data.response, null, 2);
+          }
+        } else {
+          aiResponse = response.data.response;
+        }
+      } else if (response.data.response) {
+        // Handle case where response is directly in response.data.response
+        if (typeof response.data.response === 'object') {
+          // Extract text from nested structure
+          if (response.data.response.response) {
+            aiResponse = response.data.response.response;
+          } else if (response.data.response.text) {
+            aiResponse = response.data.response.text;
+          } else {
+            const values = Object.values(response.data.response);
+            const textValue = values.find(val => typeof val === 'string');
+            aiResponse = textValue || JSON.stringify(response.data.response, null, 2);
+          }
+        } else {
+          aiResponse = response.data.response;
+        }
+      } else {
+        // Fallback - show the entire response
+        aiResponse = JSON.stringify(response.data, null, 2);
+      }
+      
+      // Clean up the response text (remove extra quotes and escape characters)
+      if (typeof aiResponse === 'string') {
+        aiResponse = aiResponse.replace(/\\n/g, '\n').replace(/\\"/g, '"');
+      }
+
       return { 
         success: true, 
-        response: response.data.response,
+        response: aiResponse,
         selectedTransactions 
       };
     } catch (err) {
       const message = err.response?.data?.detail || 'AI query failed';
-      set({ 
-        error: message, 
-        loading: false 
-      });
+      set({ error: message });
       return { success: false, error: message };
     }
   }
