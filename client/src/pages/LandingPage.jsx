@@ -115,6 +115,7 @@ export default function LandingPage() {
             <a href="#" className="text-slate-300 hover:text-lime-400">Contact</a>
           </div>
         </div>
+        
       </footer>
     </section>
   );
