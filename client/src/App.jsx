@@ -23,16 +23,16 @@ function App() {
       style={{ backgroundColor: 'var(--color-bg-primary)' }}
     >
       <Router>
+          <div>
+            <Navbar />
         <Routes>
           <Route path="/" element={
             <>
-              <Navbar />
               <LandingPage />
             </>
           } />
           <Route path="/transactions" element={
             <>
-              <Navbar />
               <Transactions />
             </>
           } />
@@ -41,13 +41,13 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Navbar />
                 <Dashboard />
               </ProtectedRoute>
             }
           />
           <Route path="*" element={<ErrorPage />} />
         </Routes>
+          </div>
       </Router>
     </div>
   );
