@@ -12,19 +12,31 @@ const Navbar = () => {
     navigate('/login');
   };
   return (
-    <nav className="bg-white shadow">
+    <nav 
+      className="text-white shadow-lg border-b" 
+      style={{ 
+        backgroundColor: 'var(--color-bg-primary)', 
+        borderColor: 'var(--color-grey-dark)' 
+      }}
+    >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>FinVista</h1>
+              <h1 className="text-xl font-bold cursor-pointer" style={{ color: 'var(--color-accent)' }} onClick={() => navigate('/')}>FinVista</h1>
             </div>
             <div className="flex items-center space-x-4">
               {isAuthenticated && user && (
                 <>
-                  <span className="text-gray-700">{user.name || user.email}</span>
+                  <span style={{ color: 'var(--color-cream)' }}>{user.name || user.email}</span>
                   <button
                     onClick={handleLogout}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
+                    className="px-3 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors"
+                    style={{ 
+                      color: 'var(--color-grey-light)',
+                      ':hover': { color: 'var(--color-accent)' }
+                    }}
+                    onMouseEnter={(e) => e.target.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.target.style.color = 'var(--color-grey-light)'}
                   >
                     Logout
                   </button>

@@ -99,7 +99,7 @@ const TransactionTable = () => {
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--color-accent)' }}></div>
       </div>
     );
   }
@@ -113,10 +113,10 @@ const TransactionTable = () => {
   }
 
   return (
-    <div className="h-full overflow-hidden transaction-table rounded-2xl">
+    <div className="h-full flex flex-col overflow-hidden transaction-table rounded-2xl">
       <div 
         ref={tableRef}
-        className="h-full overflow-auto rounded-2xl"
+        className="flex-1 overflow-auto rounded-2xl min-h-0"
         style={{ padding: '8px 0' }}
       >
         <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
