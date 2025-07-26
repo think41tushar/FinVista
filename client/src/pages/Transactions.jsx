@@ -29,7 +29,7 @@ const Transactions = () => {
           <TransactionTable />
         </div>
         
-        <div className="w-1/3 rounded-xl backdrop-blur-sm shadow-2xl flex flex-col min-h-0" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-grey-dark)' }}>
+        <div className="w-1/3 rounded-xl overflow-hidden backdrop-blur-sm shadow-2xl flex flex-col min-h-0" style={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-grey-dark)' }}>
           <ChatInterface />
         </div>
       </div>
