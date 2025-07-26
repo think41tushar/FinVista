@@ -6,7 +6,8 @@ from typing import List, Dict, Any, Optional
 from services.transaction_service import (
     create_transactions as save_bulk_transactions_service,
     update_single_transaction as update_single_transaction_service,
-    get_all_transactions as get_all_transactions_service
+    get_all_transactions as get_all_transactions_service,
+    bulk_update_transaction_data as bulk_update_transactions_service
 )
 from services.relation_service import (
     create_new_relation as create_relation_service,
@@ -54,6 +55,29 @@ def update_single_transaction(transaction_id: str, updates: Dict[str, Any]) -> D
             "status": "success",
             "message": f"Successfully updated transaction {transaction_id}.",
             "transaction": updated_transaction
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+def bulk_update_transactions(updates: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Update multiple transactions at once using the transaction service.
+    
+    Args:
+        updates: List of update dictionaries, each containing 'transaction_id' and update fields
+        
+    Returns:
+        Dict containing status and results
+    """
+    try:
+        results = bulk_update_transactions_service(updates)
+        return {
+            "status": "success",
+            "message": f"Successfully updated {len(updates)} transactions.",
+            "results": results
         }
     except Exception as e:
         return {
@@ -147,3 +171,6 @@ def update_relation(relation_id: str, updates: Dict[str, Any]) -> Dict[str, Any]
             "message": str(e)
         }
     
+
+def get_current_user_id() -> str:
+    return "lUtPijb4mCtdGrDwxGtq"
