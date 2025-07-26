@@ -7,3 +7,4 @@ google-cloud-aiplatform
 python-dotenv==1.0.0
 google-generativeai
 passlib
+bcrypt

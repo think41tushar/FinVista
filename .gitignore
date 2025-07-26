@@ -11,3 +11,4 @@ server/.env
 __pycache__
 server/utils/firebase_cred.json
 server/.venv
+.env
