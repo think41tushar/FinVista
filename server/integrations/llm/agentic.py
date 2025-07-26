@@ -6,7 +6,8 @@ transaction processing agents in the FinVista application.
 
 import os
 import logging
-from typing import Dict, Any, List, Optional
+import time
+from typing import Dict, Any, List, Optional, Tuple
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -17,7 +18,8 @@ from .tools import (
     save_bulk_transactions,
     update_single_transaction,
     create_relation,
-    update_relation
+    update_relation,
+    set_current_user_id
 )
 
 # Configure logging
@@ -63,12 +65,34 @@ def create_orchestrator_agent():
     2. Managing transaction relationships
     3. Ensuring data consistency across the system
     
-    When handling user requests:
-    - For transaction updates, use the update_single_transaction tool
-    - For creating relationships between entities, use the create_relation tool
-    - For updating relationships, use the update_relation tool
+    TOOL USAGE GUIDELINES:
     
-    Always respond in a professional, finance-oriented manner.
+    1. **update_single_transaction**: Use this tool when updating transactions that are INDEPENDENT of each other.
+       - Call this tool separately for EACH referenced transaction with its specific update details
+       - Use when transactions have no logical interconnection or dependency
+       - Examples: Individual category updates, description changes, amount corrections for unrelated transactions
+       - Parameters: transaction_id (string), updates (dict with fields to update)
+    
+    2. **create_relation**: Use this tool when user references MULTIPLE transactions that have logical interconnections.
+       - Call when transactions are dependent on each other in some way
+       - Use for transactions that have settlement possibilities
+       - Use when transactions are part of the same financial flow or event
+       - The system will automatically set the PRIMARY transaction as the one with the HIGHEST amount
+       - Include appropriate settlement notes in the metadata
+       - Examples: Transfer between accounts, loan and repayment, split bills, expense reimbursements
+       - Parameters: source_id (string), target_id (string), relation_type (string), metadata (dict with "settlement_notes" key)
+       
+    3. **update_relation**: Use this tool to modify existing relationships between transactions.
+       - Use when updating metadata, relation type, or other relationship attributes
+       - Parameters: relation_id (string), updates (dict with fields to update)
+    
+    DECISION CRITERIA:
+    - If transactions are mentioned together but are logically separate → use update_single_transaction for each
+    - If transactions are part of the same financial event/flow → use create_relation
+    - If user mentions "settlement", "transfer", "related", "connected" → likely needs create_relation
+    - If user mentions "repayment", "loan", "split", "reimbursement" → likely needs create_relation
+    
+    Always respond in a professional, finance-oriented manner and explain your actions clearly.
     """
 
     # Create the orchestrator agent as a regular Agent with all tools directly attached
@@ -85,6 +109,13 @@ def create_orchestrator_agent():
 # Initialize the orchestrator agent and runner
 orchestrator_agent = None
 orchestrator_runner = None
+
+# Dictionary to store active sessions by user_id with timestamps
+# Format: {user_id: (session_id, timestamp)}
+active_sessions = {}
+
+# Session expiration time in seconds (default: 30 minutes)
+SESSION_EXPIRATION_TIME = 30 * 60
 
 def initialize_agents():
     """Initialize the orchestrator agent and runner."""
@@ -110,7 +141,7 @@ def initialize_agents():
         return False
 
 # Function to process user requests through the orchestrator agent
-async def process_request(request: str) -> Dict[str, Any]:
+async def process_request(request: str, user_id: str = None) -> Dict[str, Any]:
     """
     Process a user request through the orchestrator agent.
     
@@ -131,17 +162,47 @@ async def process_request(request: str) -> Dict[str, Any]:
             }
             
     # Create a session with the session service if it doesn't exist
-    user_id = "finvista_user"
+    if user_id is None:
+        user_id = "finvista_user"  # fallback for backward compatibility
+    
+    # Set the current user_id for tools to use
+    set_current_user_id(user_id)
     app_name = "FinVista"
     
     try:
-        # Create a session with the session service
-        session = await orchestrator_runner.session_service.create_session(
-            app_name=app_name, 
-            user_id=user_id
-        )
-        session_id = session.id
-        logger.info(f"Created or retrieved session with ID: {session_id} for user: {user_id}")
+        # Check if we already have an active session for this user
+        current_time = time.time()
+        
+        # Check if user has an active session and if it's still valid
+        if user_id in active_sessions:
+            session_id, timestamp = active_sessions[user_id]
+            
+            # Check if session has expired
+            if current_time - timestamp > SESSION_EXPIRATION_TIME:
+                logger.info(f"Session {session_id} for user {user_id} has expired. Creating a new one.")
+                # Create a new session
+                session = await orchestrator_runner.session_service.create_session(
+                    app_name=app_name, 
+                    user_id=user_id
+                )
+                session_id = session.id
+                # Update the session with current timestamp
+                active_sessions[user_id] = (session_id, current_time)
+                logger.info(f"Created new session with ID: {session_id} for user: {user_id}")
+            else:
+                # Update timestamp for the existing session
+                active_sessions[user_id] = (session_id, current_time)
+                logger.info(f"Using existing session with ID: {session_id} for user: {user_id}")
+        else:
+            # Create a new session with the session service
+            session = await orchestrator_runner.session_service.create_session(
+                app_name=app_name, 
+                user_id=user_id
+            )
+            session_id = session.id
+            # Store the session ID and timestamp
+            active_sessions[user_id] = (session_id, current_time)
+            logger.info(f"Created new session with ID: {session_id} for user: {user_id}")
         
         # Process the request through the orchestrator agent
         # Create a proper user content object using the types module
@@ -151,14 +212,21 @@ async def process_request(request: str) -> Dict[str, Any]:
         
         # Run the agent asynchronously with the proper parameters
         response = None
-        async for event in orchestrator_runner.run_async(
-            user_id=user_id,
-            session_id=session_id,
-            new_message=user_content
-        ):
-            if event.is_final_response():
-                response_text = event.content.parts[0].text
-                response = {"response": response_text}
+        try:
+            async for event in orchestrator_runner.run_async(
+                user_id=user_id,
+                session_id=session_id,
+                new_message=user_content
+            ):
+                if event.is_final_response():
+                    response_text = event.content.parts[0].text
+                    response = {"response": response_text}
+        except Exception as e:
+            logger.error(f"Error during agent execution: {str(e)}")
+            return {
+                "error": "Failed to process request",
+                "message": str(e)
+            }
         
         return response if response else {"response": "No response generated"}
     except Exception as e:

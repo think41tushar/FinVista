@@ -1,6 +1,5 @@
 from .firebase_client import db
 from datetime import datetime, time, date
-from google.cloud import firestore
 import logging
 
 logger = logging.getLogger(__name__)
@@ -65,9 +64,15 @@ def update_transaction(txn_id: str, updates: dict):
 
 def get_transactions_by_ids(ids: list):
     logger.info("Getting transactions by ids %s", ids)
-    docs = db.collection(TXNS).where(firestore.FieldPath.document_id(), "in", ids).stream()
-    logger.info("Docs %s", docs)
-    return [{**d.to_dict(), "id": d.id} for d in docs]
+    transactions = []
+    for doc_id in ids:
+        doc = db.collection(TXNS).document(doc_id).get()
+        if doc.exists:
+            transaction_data = doc.to_dict()
+            transaction_data["id"] = doc.id
+            transactions.append(transaction_data)
+    logger.info("Found %d transactions", len(transactions))
+    return transactions
 
 def get_all_transactions(processed_status=None):
     logger.info("Getting all transactions")

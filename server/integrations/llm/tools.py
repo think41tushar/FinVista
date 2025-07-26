@@ -17,6 +17,14 @@ from services.relation_service import (
 import logging
 logger = logging.getLogger(__name__)
 
+# Global variable to store current user_id for the request context
+_current_user_id = None
+
+def set_current_user_id(user_id: str):
+    """Set the current user ID for the request context."""
+    global _current_user_id
+    _current_user_id = user_id
+
 # Transaction Management Tools
 def save_bulk_transactions(transactions: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
@@ -129,13 +137,14 @@ def create_relation(source_id: str, target_id: str, relation_type: str,
         Dict containing status and relation information
     """
     try:
-        # Create relation data object
+        # Get the current user ID
+        current_user_id = get_current_user_id()
+        
+        # Create relation data object according to the schema
         relation_data = {
-            "source_id": source_id,
-            "target_id": target_id,
-            "type": relation_type,
+            "user_id": current_user_id,
             "related_transactions": [source_id, target_id],  # Assuming IDs are transaction IDs
-            "metadata": metadata or {}
+            "settlement_notes": metadata.get("settlement_notes") if metadata else None
         }
         
         # Use a Pydantic-like object for compatibility with service
@@ -151,7 +160,7 @@ def create_relation(source_id: str, target_id: str, relation_type: str,
         
         return {
             "status": "success",
-            "message": f"Created relation between {source_id} and {target_id}",
+            "message": f"Created settlement relation between transactions {source_id} and {target_id}",
             "relation_id": created_relation["id"],
             "relation": created_relation
         }
@@ -190,6 +199,11 @@ def update_relation(relation_id: str, updates: Dict[str, Any]) -> Dict[str, Any]
     
 
 def get_current_user_id() -> str:
+    """Get the current user ID from the request context."""
+    global _current_user_id
+    if _current_user_id is not None:
+        return _current_user_id
+    # Fallback to hardcoded value for backward compatibility
     return "xh3qtsQTd7yoUL1iDjVm"
 
 

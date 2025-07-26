@@ -48,7 +48,7 @@ const useAuthStore = create(
           
           // Navigate to transactions page if navigate function provided
           if (navigate) {
-            navigate('/transactions');
+            navigate('/dashboard');
           }
           
           return { success: true, user: userData };
