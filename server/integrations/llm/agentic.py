@@ -19,7 +19,8 @@ from .tools import (
     update_single_transaction,
     create_relation,
     update_relation,
-    set_current_user_id
+    set_current_user_id,
+    execute_dynamic_transaction_query
 )
 
 # Configure logging
@@ -53,7 +54,8 @@ def create_orchestrator_agent():
     orchestrator_tools = [
         Tool(update_single_transaction),
         Tool(create_relation),
-        Tool(update_relation)
+        Tool(update_relation),
+        Tool(execute_dynamic_transaction_query)
     ]
     
     # Define the orchestrator agent instruction
@@ -64,6 +66,7 @@ def create_orchestrator_agent():
     1. Processing financial transaction requests
     2. Managing transaction relationships
     3. Ensuring data consistency across the system
+    4. Answering queries about transaction data
     
     TOOL USAGE GUIDELINES:
     
@@ -85,14 +88,27 @@ def create_orchestrator_agent():
     3. **update_relation**: Use this tool to modify existing relationships between transactions.
        - Use when updating metadata, relation type, or other relationship attributes
        - Parameters: relation_id (string), updates (dict with fields to update)
+       
+    4. **execute_dynamic_transaction_query**: Use this tool to answer questions about transaction data.
+       - Use when the user asks about spending, income, or balances over a specific time period
+       - Examples: "What was my spending last week?", "How much did I earn last month?"
+       - The tool will dynamically generate and execute the appropriate query
+       - Parameters: query (string) - The user's natural language query about transactions
+       - Will return error if query is out of scope
     
     DECISION CRITERIA:
     - If transactions are mentioned together but are logically separate → use update_single_transaction for each
     - If transactions are part of the same financial event/flow → use create_relation
     - If user mentions "settlement", "transfer", "related", "connected" → likely needs create_relation
     - If user mentions "repayment", "loan", "split", "reimbursement" → likely needs create_relation
+    - If user asks about transaction amounts, spending, income for a time period → use execute_dynamic_transaction_query
     
     Always respond in a professional, finance-oriented manner and explain your actions clearly.
+    
+    IMPORTANT FORMATTING GUIDELINES:
+    - Always use the Indian Rupee symbol (₹) when displaying monetary values
+    - Format large numbers with appropriate commas according to Indian numbering system (e.g., ₹1,00,000 for one lakh)
+    - Never use dollar signs ($) or other currency symbols
     """
 
     # Create the orchestrator agent as a regular Agent with all tools directly attached

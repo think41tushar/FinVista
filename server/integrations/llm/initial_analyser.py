@@ -39,7 +39,7 @@ def create_transaction_fetcher_agent(mcp_tools: list):
         model="gemini-2.5-flash",
         description="Fetches financial transactions from MCP or sample data.",
         instruction='''
-        1. Try to fetch 5 latest transactions from the MCP using the available MCP tools ( specifically use fetch_bank_transactions tool ).
+        1. Try to fetch 5 latest transactions from the MCP using the available MCP tools.
         2. If the MCP fails or no MCP tools are available.
         3. Return the raw transaction data without any processing.
         4. Ensure the data is properly formatted for the next agent in the pipeline.
