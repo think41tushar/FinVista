@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from integrations.llm.initial_analyser import initialize_pipeline
 from integrations.llm.agentic import initialize_agents
-from routers import auth, transactions, relations, spendings, ai
+from routers import auth, transactions, relations, spendings, ai, mutual_funds
 
 # Load environment variables from .env file
 load_dotenv()
@@ -36,3 +36,4 @@ app.include_router(transactions.router)
 app.include_router(relations.router)
 app.include_router(spendings.router)
 app.include_router(ai.router)
+app.include_router(mutual_funds.router)
