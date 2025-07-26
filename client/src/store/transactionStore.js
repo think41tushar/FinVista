@@ -45,6 +45,14 @@ const useTransactionStore = create(
     const { selectedTransactions } = get();
     return Array.from(selectedTransactions).sort((a, b) => a - b);
   },
+
+  // Get full selected transaction objects
+  getSelectedTransactions: () => {
+    const { selectedTransactions, transactions } = get();
+    return transactions.filter(transaction => 
+      selectedTransactions.has(transaction.id)
+    );
+  },
   
   // Check if a transaction is selected
   isSelected: (srNo) => {
@@ -141,6 +149,58 @@ const useTransactionStore = create(
       };
     } catch (err) {
       const message = 'Failed to fetch user data';
+      set({ 
+        error: message, 
+        loading: false 
+      });
+      return { success: false, error: message };
+    }
+  },
+
+  // Query AI with context and user message
+  queryAI: async (query, selectedTransactionIds = []) => {
+    set({ loading: true, error: null });
+    
+    try {
+      // Get full transaction objects for the selected IDs
+      const { transactions } = get();
+      const selectedTransactions = transactions.filter(transaction => 
+        selectedTransactionIds.includes(transaction.id)
+      );
+
+      // Prepare the query with transaction context
+      let contextualQuery = query;
+      if (selectedTransactions.length > 0) {
+        const transactionContext = selectedTransactions.map(t => ({
+          id: t.id,
+          date: t.date,
+          narration: t.narration,
+          withdrawn: t.withdrawn,
+          deposit: t.deposit,
+          closing_balance: t.closing_balance,
+          type: t.type,
+          tags: t.tags,
+          remarks: t.remarks
+        }));
+        
+        contextualQuery = `Context - Selected Transactions: ${JSON.stringify(transactionContext)}\n\nUser Query: ${query}`;
+      }
+
+      const response = await axios.post(`${BASE_URL}/ai/query`, {
+        query: contextualQuery
+      });
+
+      // Log the response for debugging
+      console.log('AI Query Response:', response.data);
+
+      set({ loading: false });
+      return { 
+        success: true, 
+        response: response.data.response,
+        selectedTransactions 
+      };
+    } catch (err) {
+      const message = err.response?.data?.detail || 'AI query failed';
       set({ 
         error: message, 
         loading: false 

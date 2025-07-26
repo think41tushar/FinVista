@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import useTransactionStore from '../../store/transactionStore';
+import useAuthStore from '../../store/authStore';
+import TransactionSummary from './TransactionSummary';
 
 const SendIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -12,44 +14,102 @@ const ChatInterface = () => {
     { id: 1, text: 'Hello! How can I help you analyze your financial data today?', sender: 'bot' }
   ]);
   const [inputMessage, setInputMessage] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const messagesEndRef = useRef(null);
   
-  const { getSelectedArray, clearSelection } = useTransactionStore();
-  const selectedTransactions = getSelectedArray();
+  const { user } = useAuthStore();
+  const { 
+    getSelectedArray, 
+    getSelectedTransactions,
+    clearSelection, 
+    queryAI, 
+    fetchUserData,
+    loading 
+  } = useTransactionStore();
+  
+  const selectedTransactionIds = getSelectedArray();
+  const selectedTransactions = getSelectedTransactions();
 
-  const handleSendMessage = () => {
-    if (inputMessage.trim() || selectedTransactions.length > 0) {
-      let messageText = inputMessage;
+  // Auto scroll to bottom when messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isProcessing]);
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() && selectedTransactions.length === 0) return;
+    
+    setIsProcessing(true);
+    
+    // Prepare user message text
+    let displayMessageText = inputMessage;
+    if (selectedTransactions.length > 0) {
+      const transactionSummary = selectedTransactions.map(t => 
+        `#${t.id.slice(-8)} - ${t.narration.slice(0, 50)}...`
+      ).join(', ');
+      displayMessageText = `[${selectedTransactions.length} selected: ${transactionSummary}] ${inputMessage}`;
+    }
+    
+    // Add user message to chat
+    const userMessage = {
+      id: Date.now(),
+      text: displayMessageText,
+      sender: 'user'
+    };
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Store the current selected transaction IDs for API call
+    const currentSelectedIds = [...selectedTransactionIds];
+    const currentInputMessage = inputMessage;
+    
+    // Clear input and selection
+    setInputMessage('');
+    clearSelection();
+    
+    try {
+      // Call AI API with context
+      const result = await queryAI(currentInputMessage, currentSelectedIds);
       
-      // Add selected transactions context to the message
-      if (selectedTransactions.length > 0) {
-        const transactionContext = `[Selected transactions: ${selectedTransactions.join(', ')}] `;
-        messageText = transactionContext + messageText;
-      }
-      
-      const newMessage = {
-        id: messages.length + 1,
-        text: messageText,
-        sender: 'user'
-      };
-      setMessages([...messages, newMessage]);
-      setInputMessage('');
-      clearSelection(); // Clear selection after sending
-      
-      setTimeout(() => {
-        const botResponse = {
-          id: messages.length + 2,
-          text: selectedTransactions.length > 0 
-            ? `I can see you've selected ${selectedTransactions.length} transaction(s). Let me analyze those specific transactions for you.`
-            : 'Thanks for your message! I\'m here to help you understand your financial patterns and insights.',
+      if (result.success) {
+        // Add AI response to chat
+        const botMessage = {
+          id: Date.now() + 1,
+          text: result.response,
           sender: 'bot'
         };
-        setMessages(prev => [...prev, botResponse]);
-      }, 1000);
+        setMessages(prev => [...prev, botMessage]);
+        
+        // Refresh transaction and relation data
+        if (user?.id) {
+          await fetchUserData(user.id);
+        }
+      } else {
+        // Handle error
+        const errorMessage = {
+          id: Date.now() + 1,
+          text: `Sorry, I encountered an error: ${result.error}`,
+          sender: 'bot'
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      }
+    } catch (error) {
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: 'Sorry, I encountered an unexpected error. Please try again.',
+        sender: 'bot'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleKeyPress = (event) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
       handleSendMessage();
     }
   };
@@ -89,12 +149,27 @@ const ChatInterface = () => {
                   : 'chat-message-bot mr-4'
               }`}
             >
-              <p className="text-sm leading-relaxed">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">
                 {message.text}
               </p>
             </div>
           </div>
         ))}
+        
+        {/* Loading indicator when processing */}
+        {isProcessing && (
+          <div className="flex justify-start">
+            <div className="pinterest-card max-w-[85%] p-4 rounded-2xl chat-message-bot mr-4">
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+                <p className="text-sm">AI is thinking...</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Auto scroll anchor */}
+        <div ref={messagesEndRef} />
       </div>
       
       <div 
@@ -104,34 +179,46 @@ const ChatInterface = () => {
           backgroundColor: 'var(--color-bg-tertiary)'
         }}
       >
+        {/* Transaction context preview */}
+        {selectedTransactions.length > 0 && (
+          <div className="mb-3">
+            <TransactionSummary transactions={selectedTransactions} />
+          </div>
+        )}
+        
         <div className="flex space-x-3">
           <div className="chat-input flex-1 rounded-xl px-4 py-3 transition-all min-h-[48px] flex items-center flex-wrap gap-2">
             {/* Selected transaction chips */}
-            {selectedTransactions.map((srNo) => (
-              <span key={srNo} className="selected-chip">
-                #{srNo}
+            {selectedTransactions.map((transaction) => (
+              <span key={transaction.id} className="selected-chip">
+                #{transaction.id.slice(-8)}
               </span>
             ))}
             <input
               type="text"
               className="flex-1 bg-transparent border-none outline-none min-w-[200px]"
-              placeholder={selectedTransactions.length > 0 ? "Continue your message..." : "Ask me about your finances..."}
+              placeholder={selectedTransactions.length > 0 ? "Ask about selected transactions..." : "Ask me about your finances..."}
               style={{ color: 'var(--color-white)' }}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyPress}
+              disabled={isProcessing}
             />
           </div>
           <button
             onClick={handleSendMessage}
-            disabled={!inputMessage.trim() && selectedTransactions.length === 0}
+            disabled={(!inputMessage.trim() && selectedTransactions.length === 0) || isProcessing}
             className={`px-4 py-3 rounded-xl transition-all ${
-              (inputMessage.trim() || selectedTransactions.length > 0)
-                ? 'chat-button'
-                : 'chat-button'
+              (inputMessage.trim() || selectedTransactions.length > 0) && !isProcessing
+                ? 'chat-button opacity-100'
+                : 'chat-button opacity-50 cursor-not-allowed'
             }`}
           >
-            <SendIcon />
+            {isProcessing ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+            ) : (
+              <SendIcon />
+            )}
           </button>
         </div>
       </div>
