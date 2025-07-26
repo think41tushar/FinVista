@@ -1,9 +1,9 @@
-import { useAuth } from '../contexts/AuthContext';
+import useAuthStore from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
 import ConnectFiCard from './dashboard/ConnectFiCard';
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -18,7 +18,7 @@ export default function Dashboard() {
         <div className="px-4 py-6 sm:px-0">
           <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 p-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Welcome, {user?.email?.split("@")[0]}!
+              Welcome, {user?.name || user?.email?.split("@")[0]}!
             </h2>
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <ConnectFiCard />

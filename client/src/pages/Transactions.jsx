@@ -1,8 +1,21 @@
+import { useEffect } from 'react';
 import Navbar from '../components/common/Navbar';
 import ChatInterface from '../components/common/ChatInterface';
 import TransactionTable from '../components/TransactionTable';
+import useAuthStore from '../store/authStore';
+import useTransactionStore from '../store/transactionStore';
 
 const Transactions = () => {
+  const { user, isAuthenticated } = useAuthStore();
+  const { fetchUserData, loading, error } = useTransactionStore();
+
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      // Fetch both transactions and relations when component mounts
+      fetchUserData(user.id);
+    }
+  }, [user?.id, isAuthenticated, fetchUserData]);
+
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
       

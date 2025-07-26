@@ -1,10 +1,10 @@
 import React from 'react'
-import { useAuth } from '../../contexts/AuthContext';
+import useAuthStore from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
 
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -19,13 +19,17 @@ const Navbar = () => {
               <h1 className="text-xl font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>FinVista</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">{user?.email}</span>
-              <button
-                onClick={handleLogout}
-                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
-              >
-                Logout
-              </button>
+              {isAuthenticated && user && (
+                <>
+                  <span className="text-gray-700">{user.name || user.email}</span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
+                  >
+                    Logout
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
