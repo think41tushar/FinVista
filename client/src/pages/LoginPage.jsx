@@ -1,25 +1,23 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import useAuthStore from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
-  const [email, setEmail] = useState('user@gmail.com');
-  const [password, setPassword] = useState('password');
-  const [isLoading, setIsLoading] = useState(false);
-  const { login, error } = useAuth();
+  const [email, setEmail] = useState('test@example.com');
+  const [password, setPassword] = useState('password123');
+  const [name, setName] = useState('');
+  const { login, error, loading } = useAuthStore();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     
-    const result = await login(email, password);
+    const result = await login(email, password, name || 'Alex', navigate);
     
     if (result.success) {
-      navigate('/dashboard');
+      // Navigation is handled in the login function
+      console.log('Login successful');
     }
-    
-    setIsLoading(false);
   };
 
   return (
@@ -44,6 +42,20 @@ export default function Login() {
           
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
+              <label htmlFor="name" className="sr-only">
+                Name (optional)
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Name (optional - defaults to Alex)"
+              />
+            </div>
+            <div>
               <label htmlFor="email" className="sr-only">
                 Email address
               </label>
@@ -55,7 +67,7 @@ export default function Login() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Email address"
               />
             </div>
@@ -80,10 +92,10 @@ export default function Login() {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className="group relative cursor-pointer w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Processing...' : 'Sign in / Register'}
+              {loading ? 'Processing...' : 'Sign in / Register'}
             </button>
           </div>
         </form>
