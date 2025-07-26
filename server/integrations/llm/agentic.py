@@ -6,7 +6,8 @@ transaction processing agents in the FinVista application.
 
 import os
 import logging
-from typing import Dict, Any, List, Optional
+import time
+from typing import Dict, Any, List, Optional, Tuple
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -109,6 +110,13 @@ def create_orchestrator_agent():
 orchestrator_agent = None
 orchestrator_runner = None
 
+# Dictionary to store active sessions by user_id with timestamps
+# Format: {user_id: (session_id, timestamp)}
+active_sessions = {}
+
+# Session expiration time in seconds (default: 30 minutes)
+SESSION_EXPIRATION_TIME = 30 * 60
+
 def initialize_agents():
     """Initialize the orchestrator agent and runner."""
     global orchestrator_agent, orchestrator_runner
@@ -162,13 +170,39 @@ async def process_request(request: str, user_id: str = None) -> Dict[str, Any]:
     app_name = "FinVista"
     
     try:
-        # Create a session with the session service
-        session = await orchestrator_runner.session_service.create_session(
-            app_name=app_name, 
-            user_id=user_id
-        )
-        session_id = session.id
-        logger.info(f"Created or retrieved session with ID: {session_id} for user: {user_id}")
+        # Check if we already have an active session for this user
+        current_time = time.time()
+        
+        # Check if user has an active session and if it's still valid
+        if user_id in active_sessions:
+            session_id, timestamp = active_sessions[user_id]
+            
+            # Check if session has expired
+            if current_time - timestamp > SESSION_EXPIRATION_TIME:
+                logger.info(f"Session {session_id} for user {user_id} has expired. Creating a new one.")
+                # Create a new session
+                session = await orchestrator_runner.session_service.create_session(
+                    app_name=app_name, 
+                    user_id=user_id
+                )
+                session_id = session.id
+                # Update the session with current timestamp
+                active_sessions[user_id] = (session_id, current_time)
+                logger.info(f"Created new session with ID: {session_id} for user: {user_id}")
+            else:
+                # Update timestamp for the existing session
+                active_sessions[user_id] = (session_id, current_time)
+                logger.info(f"Using existing session with ID: {session_id} for user: {user_id}")
+        else:
+            # Create a new session with the session service
+            session = await orchestrator_runner.session_service.create_session(
+                app_name=app_name, 
+                user_id=user_id
+            )
+            session_id = session.id
+            # Store the session ID and timestamp
+            active_sessions[user_id] = (session_id, current_time)
+            logger.info(f"Created new session with ID: {session_id} for user: {user_id}")
         
         # Process the request through the orchestrator agent
         # Create a proper user content object using the types module
@@ -178,14 +212,21 @@ async def process_request(request: str, user_id: str = None) -> Dict[str, Any]:
         
         # Run the agent asynchronously with the proper parameters
         response = None
-        async for event in orchestrator_runner.run_async(
-            user_id=user_id,
-            session_id=session_id,
-            new_message=user_content
-        ):
-            if event.is_final_response():
-                response_text = event.content.parts[0].text
-                response = {"response": response_text}
+        try:
+            async for event in orchestrator_runner.run_async(
+                user_id=user_id,
+                session_id=session_id,
+                new_message=user_content
+            ):
+                if event.is_final_response():
+                    response_text = event.content.parts[0].text
+                    response = {"response": response_text}
+        except Exception as e:
+            logger.error(f"Error during agent execution: {str(e)}")
+            return {
+                "error": "Failed to process request",
+                "message": str(e)
+            }
         
         return response if response else {"response": "No response generated"}
     except Exception as e:
