@@ -9,7 +9,7 @@ import google.generativeai as genai
 
 # Load environment variables from .env file
 load_dotenv()
-from .tools import save_bulk_transactions, update_single_transaction, get_all_transactions
+from .tools import save_bulk_transactions, update_single_transaction, get_all_transactions, get_current_user_id
 from .mcp import initialiseFiMCP
 
 # Configure logging
@@ -28,7 +28,8 @@ genai.configure(api_key=API_KEY)
 def create_data_cleaner_agent(mcp_tools: list):
     """Creates an agent for cleaning transaction data."""
     local_tools = [
-        Tool(save_bulk_transactions)
+        Tool(save_bulk_transactions),
+        Tool(get_current_user_id)
     ]
 
     all_tools = local_tools + mcp_tools
@@ -39,18 +40,19 @@ def create_data_cleaner_agent(mcp_tools: list):
         model="gemini-2.5-flash",
         description="Cleans and stores financial transactions from MCP.",
         instruction='''
-        1. Fetch transactions from the MCP using the available tools.
-
-        2. Clean the data:
+        1. Fetch 5 latest transactions from the MCP using the available tools.
+        2. Fetch current user_id using get_current_user_id tool.
+        3. Clean the data:
         - Convert all `date` fields to ISO 8601 datetime strings (e.g., "2025-07-24T00:00:00") or Python `datetime.datetime` objects.
         - Remove duplicates based on a combination of fields such as `date`, `amount`, and `narration`.
         - Standardize field names to match the schema: 
             `amount`, `narration`, `date`, `type`, `mode`, `balance`, `user_id`.
         - Ensure all fields are Firestore-compatible (no `datetime.date` types or unsupported objects).
 
-        3. Store the cleaned transactions using the `save_bulk_transactions` tool.
+        4. Store the cleaned transactions using the `save_bulk_transactions` tool.
 
-        4. Each transaction should follow this format:
+        5. Each transaction should follow this format:
+        - Use the user_id fetched in step 2.
         ```json
         [
         {
@@ -80,7 +82,8 @@ def create_data_tagger_agent():
     """Creates an agent for tagging transactions."""
     tools = [
         Tool(get_all_transactions),
-        Tool(update_single_transaction)
+        Tool(update_single_transaction),
+        Tool(get_current_user_id)
     ]
     return Agent(
         name="data_tagger",
@@ -88,8 +91,25 @@ def create_data_tagger_agent():
         description="Tags financial transactions with relevant categories.",
         instruction='''
         1. Retrieve all transactions using the get_all_transactions tool.
-        2. Analyze the description of each transaction to determine a suitable tag (e.g., 'food', 'investment').
-        3. Update each transaction with its new tag using the update_single_transaction tool.
+        2. Fetch current user_id using get_current_user_id tool.
+        3. For each transaction:
+           - Analyze the 'narration' and 'mode' fields to determine the most appropriate category
+           - For UPI transactions, extract merchant names from the narration (e.g., 'UPI-MERCHANTNAME' → 'MERCHANTNAME')
+           - Standardize transaction types to: 'CREDIT', 'DEBIT', or 'TRANSFER'
+           - Add relevant tags based on transaction patterns (e.g., 'recurring', 'refund', 'online')
+           - Preserve all original transaction data while adding/updating fields
+        4. Update each transaction using update_single_transaction with this format:
+           {
+               "transaction_id": "original_id",
+               "updates": {
+                   "category": "standardized_category",
+                   "merchant": "extracted_merchant_name",
+                   "tags": ["relevant", "tags"],
+                   "type": "standardized_type"
+               }
+           }
+        5. For any ambiguous transactions, use generic categories like 'UNCATEGORIZED' rather than guessing
+        6. Maintain data consistency by using consistent naming for similar transactions
         ''',
         tools=tools
     )

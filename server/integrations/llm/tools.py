@@ -119,3 +119,6 @@ def update_relation(relation_id: str, updates: Dict[str, Any]) -> Dict[str, Any]
         "message": f"Updated relation {relation_id}",
         "relation": {"id": relation_id, **updates}
     }
+
+def get_current_user_id() -> str:
+    return "lUtPijb4mCtdGrDwxGtq"
