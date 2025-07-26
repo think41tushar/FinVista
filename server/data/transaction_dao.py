@@ -1,7 +1,13 @@
 from .firebase_client import db
-from datetime import datetime
+from datetime import datetime, time, date
 
 TXNS = "transactions"
+
+def convert_dates_to_datetimes(data: dict) -> dict:
+    for key, value in data.items():
+        if isinstance(value, date) and not isinstance(value, datetime):
+            data[key] = datetime.combine(value, time.min)
+    return data
 
 def batch_create(transactions: list):
     batch = db.batch()
@@ -10,9 +16,12 @@ def batch_create(transactions: list):
     for t in transactions:
         ref = db.collection(TXNS).document()
         data = t.dict()
-        data.update({"closing_balance": t.deposit - t.withdrawn,
-                     "created_at": now,
-                     "updated_at": now})
+        data = convert_dates_to_datetimes(data)  # 👈 Fix added here
+        data.update({
+            "closing_balance": t.deposit - t.withdrawn,
+            "created_at": now,
+            "updated_at": now
+        })
         batch.set(ref, data)
         refs.append(ref.id)
     batch.commit()
