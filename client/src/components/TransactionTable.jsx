@@ -117,9 +117,8 @@ const TransactionTable = () => {
       <div 
         ref={tableRef}
         className="flex-1 overflow-auto rounded-2xl min-h-0"
-        style={{ padding: '8px 0' }}
       >
-        <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+        <table className="w-full border-collapse rounded-2xl" style={{ tableLayout: 'fixed' }}>
           {/* Table Header */}
           <thead className="sticky top-0 z-20">
             <tr className="table-header">
