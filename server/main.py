@@ -22,13 +22,6 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# Import routers
-@app.on_event("startup")
-async def startup_event():
-    """Initializes the AI agents and pipeline when the server starts."""
-    await initialize_pipeline()
-    initialize_agents()
-
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
