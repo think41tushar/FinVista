@@ -2,10 +2,15 @@
 """
 Database initialization script
 Clears all collections and creates a test user with sample transaction data
+
+Usage:
+  python scripts/init_database.py          # Clear and populate with test data
+  python scripts/init_database.py --clean  # Only clear all collections
 """
 
 import sys
 import os
+import argparse
 from datetime import datetime, date
 from passlib.context import CryptContext
 
@@ -226,31 +231,67 @@ def populate_transactions(user_id):
     
     print(f"   ✅ Total transactions created: {total_created}")
 
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(
+        description="Database initialization script",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python scripts/init_database.py          # Clear and populate with test data
+  python scripts/init_database.py --clean  # Only clear all collections
+        """
+    )
+    
+    parser.add_argument(
+        '--clean',
+        action='store_true',
+        help='Only clear all collections without populating test data'
+    )
+    
+    return parser.parse_args()
+
 def main():
     """Main function to initialize the database"""
-    print("🚀 Starting database initialization...")
-    print("=" * 50)
+    args = parse_arguments()
     
-    try:
-        # Step 1: Clear all collections
-        clear_all_collections()
-        
-        # Step 2: Create test user
-        user = create_test_user()
-        
-        # Step 3: Populate transactions
-        populate_transactions(user["id"])
-        
+    if args.clean:
+        print("🧹 Starting database cleanup...")
         print("=" * 50)
-        print("✅ Database initialization completed successfully!")
-        print(f"Test user credentials:")
-        print(f"   Email: {TEST_USER_EMAIL}")
-        print(f"   Password: {TEST_USER_PASSWORD}")
-        print(f"   User ID: {user['id']}")
         
-    except Exception as e:
-        print(f"❌ Error during database initialization: {str(e)}")
-        raise
+        try:
+            clear_all_collections()
+            print("=" * 50)
+            print("✅ Database cleanup completed successfully!")
+            print("All collections have been cleared.")
+            
+        except Exception as e:
+            print(f"❌ Error during database cleanup: {str(e)}")
+            raise
+    else:
+        print("🚀 Starting database initialization...")
+        print("=" * 50)
+        
+        try:
+            # Step 1: Clear all collections
+            clear_all_collections()
+            
+            # Step 2: Create test user
+            user = create_test_user()
+            
+            # Step 3: Populate transactions
+            populate_transactions(user["id"])
+            
+            print("=" * 50)
+            print("✅ Database initialization completed successfully!")
+            print(f"Test user credentials:")
+            print(f"   Email: {TEST_USER_EMAIL}")
+            print(f"   Password: {TEST_USER_PASSWORD}")
+            print(f"   User ID: {user['id']}")
+            
+        except Exception as e:
+            print(f"❌ Error during database initialization: {str(e)}")
+            raise
 
 if __name__ == "__main__":
     main()
