@@ -23,7 +23,8 @@ from .tools import (
     execute_dynamic_transaction_query
 )
 
-from .mutual_fund_pipeline import MutualFundPipeline, MutualFundDataAgent
+from .mutual_fund_pipeline import MutualFundDataAgent
+from .stocks_pipeline import StockDataAgent
 
 # Configure logging
 logging.basicConfig(
@@ -55,13 +56,18 @@ def create_orchestrator_agent():
     # Create an instance of MutualFundDataAgent to access the sample data method
     mutual_fund_data_agent = MutualFundDataAgent()
     mutual_fund_data_agent_data = mutual_fund_data_agent.get_mutual_fund_sample_data
+
+    # Create an instance of StockDataAgent to access the sample data method
+    stock_data_agent = StockDataAgent()
+    stock_data_agent_data = stock_data_agent.get_stock_sample_data
     # Define all tools that will be directly available to the orchestrator
     orchestrator_tools = [
         Tool(update_single_transaction),
         Tool(create_relation),
         Tool(update_relation),
         Tool(execute_dynamic_transaction_query),
-        Tool(mutual_fund_data_agent_data)
+        Tool(mutual_fund_data_agent_data),
+        Tool(stock_data_agent_data)
     ]
     
     # Define the orchestrator agent instruction
@@ -108,6 +114,13 @@ def create_orchestrator_agent():
        - The data includes current value, total invested, returns, and classification by fund type
        - No parameters required - simply call this tool when mutual fund data is needed
        - Example use cases: "Show me my mutual fund performance", "Analyze my portfolio allocation"
+    
+    6. **stock_data_agent_data**: Use this tool to retrieve sample stock portfolio data for analysis and visualization.
+       - Returns a structured dataset containing stock holdings, performance metrics, and allocation details
+       - Use when the user requests stock portfolio analysis, performance tracking, or allocation overview
+       - The data includes current value, total invested, returns, and classification by stock type
+       - No parameters required - simply call this tool when stock data is needed
+       - Example use cases: "Show me my stock performance", "Analyze my portfolio allocation"
     
     DECISION CRITERIA:
     - If transactions are mentioned together but are logically separate → use update_single_transaction for each
