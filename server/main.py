@@ -5,6 +5,12 @@ from fastapi import FastAPI
 app = FastAPI()
 
 
+
+
+
+
+app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
