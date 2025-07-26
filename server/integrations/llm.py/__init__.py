@@ -1,1 +1,1 @@
-from . import agentic
+from . import agent
