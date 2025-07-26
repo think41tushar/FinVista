@@ -23,6 +23,8 @@ from .tools import (
     execute_dynamic_transaction_query
 )
 
+from .mutual_fund_pipeline import MutualFundPipeline, MutualFundDataAgent
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -50,12 +52,16 @@ genai.configure(api_key=API_KEY)
 def create_orchestrator_agent():
     """Create the orchestrator agent with all tools directly attached."""
     
+    # Create an instance of MutualFundDataAgent to access the sample data method
+    mutual_fund_data_agent = MutualFundDataAgent()
+    mutual_fund_data_agent_data = mutual_fund_data_agent.get_mutual_fund_sample_data
     # Define all tools that will be directly available to the orchestrator
     orchestrator_tools = [
         Tool(update_single_transaction),
         Tool(create_relation),
         Tool(update_relation),
-        Tool(execute_dynamic_transaction_query)
+        Tool(execute_dynamic_transaction_query),
+        Tool(mutual_fund_data_agent_data)
     ]
     
     # Define the orchestrator agent instruction
@@ -96,6 +102,13 @@ def create_orchestrator_agent():
        - Parameters: query (string) - The user's natural language query about transactions
        - Will return error if query is out of scope
     
+    5. **mutual_fund_data_agent_data**: Use this tool to retrieve sample mutual fund portfolio data for analysis and visualization.
+       - Returns a structured dataset containing mutual fund holdings, performance metrics, and allocation details
+       - Use when the user requests mutual fund portfolio analysis, performance tracking, or allocation overview
+       - The data includes current value, total invested, returns, and classification by fund type
+       - No parameters required - simply call this tool when mutual fund data is needed
+       - Example use cases: "Show me my mutual fund performance", "Analyze my portfolio allocation"
+    
     DECISION CRITERIA:
     - If transactions are mentioned together but are logically separate → use update_single_transaction for each
     - If transactions are part of the same financial event/flow → use create_relation
@@ -116,7 +129,7 @@ def create_orchestrator_agent():
         name="finvista_orchestrator",
         description="FinVista orchestrator agent for financial transaction processing",
         instruction=instruction,
-        model="gemini-2.5-pro",
+        model="gemini-2.5-flash",
         tools=orchestrator_tools
     )
     

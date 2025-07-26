@@ -9,6 +9,7 @@ import Navbar from "./components/common/Navbar";
 import ErrorPage from "./pages/ErrorPage";
 import useAuthStore from "./store/authStore";
 import LandingPage from "./pages/LandingPage";
+import MutualFundAnalysis from "./pages/MutualFundAnalysis";
 
 function App() {
   const { initializeAuth, isAuthenticated } = useAuthStore();
@@ -35,6 +36,11 @@ function App() {
             <>
               <Transactions />
             </>
+          } />
+          <Route path="/analysis" element={
+            <ProtectedRoute>
+              <MutualFundAnalysis />
+            </ProtectedRoute>
           } />
           <Route path="/login" element={<Login />} />
           <Route

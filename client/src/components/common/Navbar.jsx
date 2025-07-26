@@ -27,6 +27,42 @@ const Navbar = () => {
             <div className="flex items-center space-x-4">
               {isAuthenticated && user && (
                 <>
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className="px-3 py-2 rounded-md font-medium cursor-pointer transition-colors"
+                    style={{ 
+                      color: 'var(--color-grey-light)',
+                      ':hover': { color: 'var(--color-accent)' }
+                    }}
+                    onMouseEnter={(e) => e.target.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.target.style.color = 'var(--color-grey-light)'}
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => navigate('/analysis')}
+                    className="px-3 py-2 rounded-md font-medium cursor-pointer transition-colors"
+                    style={{ 
+                      color: 'var(--color-grey-light)',
+                      ':hover': { color: 'var(--color-accent)' }
+                    }}
+                    onMouseEnter={(e) => e.target.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.target.style.color = 'var(--color-grey-light)'}
+                  >
+                    Portfolio Analysis
+                  </button>
+                  <button
+                    onClick={() => navigate('/transactions')}
+                    className="px-3 py-2 rounded-md font-medium cursor-pointer transition-colors"
+                    style={{ 
+                      color: 'var(--color-grey-light)',
+                      ':hover': { color: 'var(--color-accent)' }
+                    }}
+                    onMouseEnter={(e) => e.target.style.color = 'var(--color-accent)'}
+                    onMouseLeave={(e) => e.target.style.color = 'var(--color-grey-light)'}
+                  >
+                    Transactions
+                  </button>
                   <span style={{ color: 'var(--color-cream)' }}>{user.name || user.email}</span>
                   <button
                     onClick={handleLogout}
