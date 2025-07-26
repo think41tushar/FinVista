@@ -24,10 +24,26 @@ def batch_create(transactions: list):
         logger.info("Transaction %s", t)
         ref = db.collection(TXNS).document()
         logger.info("Ref %s", ref)
-        data = t.dict()
+        # Check if t is already a dictionary or has a dict() method
+        if isinstance(t, dict):
+            data = t
+        elif hasattr(t, 'dict') and callable(t.dict):
+            data = t.dict()
+        else:
+            # Try to convert to dictionary using __dict__ if available
+            data = vars(t) if hasattr(t, '__dict__') else {}
+        
         logger.info("Data %s", data)
+        
+        # Convert any date objects to datetime
+        data = convert_dates_to_datetimes(data)
+        
+        # Safely access deposit and withdrawn values
+        deposit = data.get('deposit', 0)
+        withdrawn = data.get('withdrawn', 0)
+        
         data.update({
-            "closing_balance": t.deposit - t.withdrawn,
+            "closing_balance": deposit - withdrawn,
             "created_at": now,
             "updated_at": now
         })
