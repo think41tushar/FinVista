@@ -8,6 +8,10 @@ from services.transaction_service import (
     update_single_transaction as update_single_transaction_service,
     get_all_transactions as get_all_transactions_service
 )
+from services.relation_service import (
+    create_new_relation as create_relation_service,
+    update_existing_relation as update_relation_service
+)
 
 # Transaction Management Tools
 def save_bulk_transactions(transactions: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -85,21 +89,39 @@ def create_relation(source_id: str, target_id: str, relation_type: str,
     Returns:
         Dict containing status and relation information
     """
-    # Placeholder implementation
-    # TODO: Implement actual relation creation logic
-    relation_id = f"rel_{source_id}_{target_id}"
-    return {
-        "status": "success",
-        "message": f"Created relation between {source_id} and {target_id}",
-        "relation_id": relation_id,
-        "relation": {
-            "id": relation_id,
+    try:
+        # Create relation data object
+        relation_data = {
             "source_id": source_id,
             "target_id": target_id,
             "type": relation_type,
+            "related_transactions": [source_id, target_id],  # Assuming IDs are transaction IDs
             "metadata": metadata or {}
         }
-    }
+        
+        # Use a Pydantic-like object for compatibility with service
+        class RelationIn:
+            def __init__(self, **data):
+                self.__dict__.update(data)
+                
+            def dict(self):
+                return self.__dict__
+                
+        rel_in = RelationIn(**relation_data)
+        created_relation = create_relation_service(rel_in)
+        
+        return {
+            "status": "success",
+            "message": f"Created relation between {source_id} and {target_id}",
+            "relation_id": created_relation["id"],
+            "relation": created_relation
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+    
 
 def update_relation(relation_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -112,10 +134,16 @@ def update_relation(relation_id: str, updates: Dict[str, Any]) -> Dict[str, Any]
     Returns:
         Dict containing status and updated relation
     """
-    # Placeholder implementation
-    # TODO: Implement actual relation update logic
-    return {
-        "status": "success",
-        "message": f"Updated relation {relation_id}",
-        "relation": {"id": relation_id, **updates}
-    }
+    try:
+        updated_relation = update_relation_service(relation_id, updates)
+        return {
+            "status": "success",
+            "message": f"Updated relation {relation_id}",
+            "relation": updated_relation
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+    
