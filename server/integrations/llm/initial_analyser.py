@@ -1,11 +1,14 @@
 import os
 import logging
-import os
-import logging
-from google.adk import Agent, Tool, Runner
+from dotenv import load_dotenv
+from google.adk import Agent, Runner
+from google.adk.tools.function_tool import FunctionTool as Tool
 from google.adk.agents import SequentialAgent
-from google.genai import GenerativeModel
+from google.adk.sessions import InMemorySessionService
 import google.generativeai as genai
+
+# Load environment variables from .env file
+load_dotenv()
 from .tools import save_bulk_transactions, update_single_transaction, get_all_transactions
 from .mcp import initialiseFiMCP
 
@@ -25,19 +28,15 @@ genai.configure(api_key=API_KEY)
 def create_data_cleaner_agent(mcp_tools: list):
     """Creates an agent for cleaning transaction data."""
     local_tools = [
-        Tool(
-            func=save_bulk_transactions,
-            name="save_bulk_transactions",
-            description="Stores cleaned financial transactions."
-        )
+        Tool(save_bulk_transactions)
     ]
 
     all_tools = local_tools + mcp_tools
 
-    model = GenerativeModel("gemini")
+    # Use a string model name instead of GenerativeModel instance
     return Agent(
         name="data_cleaner",
-        model=model,
+        model="gemini-2.5-pro",
         description="Cleans and stores financial transactions from MCP.",
         instruction='''
         1. Fetch transactions from the MCP using the available tools.
@@ -50,21 +49,12 @@ def create_data_cleaner_agent(mcp_tools: list):
 def create_data_tagger_agent():
     """Creates an agent for tagging transactions."""
     tools = [
-        Tool(
-            func=get_all_transactions,
-            name="get_all_transactions",
-            description="Retrieves all financial transactions."
-        ),
-        Tool(
-            func=update_single_transaction,
-            name="update_single_transaction",
-            description="Updates a transaction with a tag."
-        )
+        Tool(get_all_transactions),
+        Tool(update_single_transaction)
     ]
-    model = GenerativeModel("gemini")
     return Agent(
         name="data_tagger",
-        model=model,
+        model="gemini-2.5-pro",
         description="Tags financial transactions with relevant categories.",
         instruction='''
         1. Retrieve all transactions using the get_all_transactions tool.
@@ -94,5 +84,10 @@ async def initialize_pipeline():
     global pipeline, runner
     if pipeline is None:
         pipeline = await create_initial_analysis_pipeline()
-        runner = Runner(agent=pipeline, app_name="FinVistaInitialAnalysis")
+        session_service = InMemorySessionService()
+        runner = Runner(
+            agent=pipeline,
+            app_name="FinVistaInitialAnalysis",
+            session_service=session_service
+        )
         logger.info(f"Initial analysis pipeline '{pipeline.name}' initialized successfully.")

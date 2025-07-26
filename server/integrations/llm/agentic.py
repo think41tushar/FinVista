@@ -7,6 +7,10 @@ transaction processing agents in the FinVista application.
 import os
 import logging
 from typing import Dict, Any, List, Optional
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import the tools
 from .tools import (
@@ -24,14 +28,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import ADK components
-from google.adk import Agent, Tool, Runner
+from google.adk import Agent, Runner
+from google.adk.tools.function_tool import FunctionTool as Tool
 from google.adk.agents import SequentialAgent
-from google.genai import GenerativeModel
+from google.adk.sessions import InMemorySessionService
 import google.generativeai as genai
 
 # Configure Gemini API
 # Get API key from environment variable
 API_KEY = os.environ.get("GEMINI_API_KEY")
+logger.info(f"GEMINI_API_KEY: {API_KEY}")
 if not API_KEY:
     logger.warning("GEMINI_API_KEY not found in environment variables. Please set it in the .env file.")
 genai.configure(api_key=API_KEY)
@@ -41,20 +47,9 @@ def create_transaction_agent():
     """Create an agent specialized in transaction management."""
     # Define transaction tools
     transaction_tools = [
-        Tool(
-            func=save_bulk_transactions,
-            name="save_bulk_transactions",
-            description="Save multiple transactions at once. Input should be a list of transaction objects."
-        ),
-        Tool(
-            func=update_single_transaction,
-            name="update_single_transaction",
-            description="Update a single transaction by ID. Input should be the transaction ID and the fields to update."
-        ),
+        Tool(save_bulk_transactions),
+        Tool(update_single_transaction),
     ]
-    
-    # Create a Gemini model for the agent
-    transaction_model = GenerativeModel("gemini")  # Using standard Gemini model instead of Pro
     
     # Create transaction agent using ADK
     transaction_agent = Agent(
@@ -63,7 +58,7 @@ def create_transaction_agent():
         instruction="You are a Transaction Management Agent. Your role is to process and manage financial transactions.\n"
                     "You can save multiple transactions at once or update individual transactions.\n"
                     "Always respond in a professional manner suitable for financial operations.",
-        model=transaction_model,  # Use the actual Gemini model instance
+        model="gemini-pro",
         tools=transaction_tools
     )
     
@@ -74,20 +69,9 @@ def create_relation_agent():
     """Create an agent specialized in relation management."""
     # Define relation tools
     relation_tools = [
-        Tool(
-            func=create_relation,
-            name="create_relation",
-            description="Create a relation between two entities. Input should be source ID, target ID, relation type, and optional metadata."
-        ),
-        Tool(
-            func=update_relation,
-            name="update_relation",
-            description="Update an existing relation. Input should be the relation ID and the fields to update."
-        )
+        Tool(create_relation),
+        Tool(update_relation)
     ]
-    
-    # Create a Gemini model for the agent
-    relation_model = GenerativeModel("gemini")  # Using standard Gemini model instead of Pro
     
     # Create relation agent using ADK
     relation_agent = Agent(
@@ -97,7 +81,7 @@ def create_relation_agent():
                     "between financial entities.\n"
                     "You can create new relations or update existing ones.\n"
                     "Always respond in a professional manner suitable for financial operations.",
-        model=relation_model,  # Use the actual Gemini model instance
+        model="gemini-pro",
         tools=relation_tools
     )
     
@@ -133,8 +117,8 @@ def create_orchestrator_agent():
     orchestrator_agent = SequentialAgent(
         name="finvista_orchestrator",
         sub_agents=[transaction_agent, relation_agent],
-        description="FinVista orchestrator agent for financial transaction processing",
-        instruction=instruction  # Add the instruction to the orchestrator
+        description="FinVista orchestrator agent for financial transaction processing"
+        # Note: instruction parameter is not supported in SequentialAgent
     )
     
     return orchestrator_agent
@@ -153,11 +137,11 @@ def initialize_agents():
         
         # Create a runner for the orchestrator agent
         # In ADK, Runner handles the execution of the agent and manages state
+        session_service = InMemorySessionService()
         orchestrator_runner = Runner(
             agent=orchestrator_agent,
             app_name="FinVista",
-            # For production, you can implement a session service for state management
-            # ADK provides SessionService classes for different storage backends
+            session_service=session_service
         )
         
         logger.info(f"Orchestrator agent '{orchestrator_agent.name}' initialized successfully")

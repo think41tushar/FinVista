@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from ..integrations.llm.agentic import process_request
-from ..integrations.llm.initial_analyser import initialize_pipeline, runner as initial_pipeline_runner
+from integrations.llm.agentic import process_request
+from integrations.llm.initial_analyser import initialize_pipeline, runner as initial_pipeline_runner
 
 router = APIRouter(
     prefix="/ai",
