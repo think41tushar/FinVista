@@ -2,6 +2,82 @@ import { useState, useEffect, useRef } from 'react';
 import useTransactionStore from '../../store/transactionStore';
 import useAuthStore from '../../store/authStore';
 
+// Format message text with markdown-like syntax
+const formatMessageText = (text) => {
+  if (!text) return null;
+  
+  // Split by double newlines to handle paragraphs
+  return text.split('\n\n').map((paragraph, pIndex) => (
+    <p key={`p-${pIndex}`} className="mb-3">
+      {paragraph.split('\n').map((line, lIndex, lines) => {
+        // Process each line for markdown-like syntax
+        let elements = [];
+        let remainingText = line;
+        
+        // Process bold text
+        const processBold = (txt) => {
+          const parts = [];
+          let lastIndex = 0;
+          let match;
+          const regex = /\*\*(.*?)\*\*/g;
+          
+          while ((match = regex.exec(txt)) !== null) {
+            // Add text before the match
+            if (match.index > lastIndex) {
+              parts.push(processItalic(txt.substring(lastIndex, match.index)));
+            }
+            // Add the bold text
+            parts.push(<strong key={`bold-${match.index}`}>{processItalic(match[1])}</strong>);
+            lastIndex = match.index + match[0].length;
+          }
+          
+          // Add any remaining text
+          if (lastIndex < txt.length) {
+            parts.push(processItalic(txt.substring(lastIndex)));
+          }
+          
+          return parts.length > 0 ? parts : processItalic(txt);
+        };
+        
+        // Process italic text
+        const processItalic = (txt) => {
+          const parts = [];
+          let lastIndex = 0;
+          let match;
+          const regex = /\*(.*?)\*/g;
+          
+          while ((match = regex.exec(txt)) !== null) {
+            // Add text before the match
+            if (match.index > lastIndex) {
+              parts.push(txt.substring(lastIndex, match.index));
+            }
+            // Add the italic text
+            parts.push(<em key={`em-${match.index}`}>{match[1]}</em>);
+            lastIndex = match.index + match[0].length;
+          }
+          
+          // Add any remaining text
+          if (lastIndex < txt.length) {
+            parts.push(txt.substring(lastIndex));
+          }
+          
+          return parts.length > 0 ? parts : txt;
+        };
+        
+        // Process the line with both bold and italic formatters
+        const processedLine = processBold(remainingText);
+        
+        return (
+          <span key={`line-${lIndex}`}>
+            {processedLine}
+            {lIndex < lines.length - 1 && <br />}
+          </span>
+        );
+      })}
+    </p>
+  ));
+};
+
 const SendIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -162,9 +238,9 @@ const ChatInterface = () => {
                   : 'chat-message-bot mr-4'
               }`}
             >
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {message.text}
-              </p>
+              <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                {formatMessageText(message.text)}
+              </div>
             </div>
           </div>
         ))}
