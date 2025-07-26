@@ -9,7 +9,7 @@ import google.generativeai as genai
 
 # Load environment variables from .env file
 load_dotenv()
-from .tools import save_bulk_transactions, update_single_transaction, get_all_transactions, get_current_user_id
+from .tools import save_bulk_transactions, bulk_update_transactions, get_all_transactions, get_current_user_id
 from .mcp import initialiseFiMCP
 
 # Configure logging
@@ -32,7 +32,10 @@ def create_data_cleaner_agent(mcp_tools: list):
         Tool(get_current_user_id)
     ]
 
+    logger.info("Local tools: %s", local_tools)
+    logger.info("MCP tools: %s", mcp_tools)
     all_tools = local_tools + mcp_tools
+    logger.info("All tools: %s", all_tools)
 
     # Use a string model name instead of GenerativeModel instance
     return Agent(
@@ -82,7 +85,7 @@ def create_data_tagger_agent():
     """Creates an agent for tagging transactions."""
     tools = [
         Tool(get_all_transactions),
-        Tool(update_single_transaction),
+        Tool(bulk_update_transactions),
         Tool(get_current_user_id)
     ]
     return Agent(
@@ -98,7 +101,7 @@ def create_data_tagger_agent():
            - Standardize transaction types to: 'CREDIT', 'DEBIT', or 'TRANSFER'
            - Add relevant tags based on transaction patterns (e.g., 'recurring', 'refund', 'online')
            - Preserve all original transaction data while adding/updating fields
-        4. Update each transaction using update_single_transaction with this format:
+        4. Update each transaction using bulk_update_transactions with this format:
            {
                "transaction_id": "original_id",
                "updates": {

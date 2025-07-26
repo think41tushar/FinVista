@@ -9,15 +9,18 @@ from routers import auth, transactions, relations, spendings, ai
 # Load environment variables from .env file
 load_dotenv()
 
+from fastapi.middleware.cors import CORSMiddleware
+
+# Initialize the FastAPI app
 app = FastAPI()
 
-# Configure CORS
+# Enable CORS for all origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins for development
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
 )
 
 @app.on_event("startup")
@@ -30,12 +33,11 @@ async def startup_event():
 def read_root():
     return {"Hello": "World"}
 
-
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}
 
-# Include existing and new routers
+# Include routers
 app.include_router(auth.router)
 app.include_router(transactions.router)
 app.include_router(relations.router)
