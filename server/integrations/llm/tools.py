@@ -204,7 +204,7 @@ def get_current_user_id() -> str:
     if _current_user_id is not None:
         return _current_user_id
     # Fallback to hardcoded value for backward compatibility
-    return "5qQv5bR5BB4BqTYj0Qna"
+    return "xh3qtsQTd7yoUL1iDjVm"
 
 
 def get_sample_transactions() -> List[Dict[str, Any]]:

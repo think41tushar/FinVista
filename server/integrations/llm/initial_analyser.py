@@ -39,7 +39,7 @@ def create_transaction_fetcher_agent(mcp_tools: list):
         model="gemini-2.5-flash",
         description="Fetches financial transactions from MCP or sample data.",
         instruction='''
-        1. Try to fetch 5 latest transactions from the MCP using the available MCP tools.
+        1. Try to fetch 5 latest transactions from the MCP using the available MCP tools ( specifically use fetch_bank_transactions tool only ).
         2. If the MCP fails or no MCP tools are available.
         3. Return the raw transaction data without any processing.
         4. Ensure the data is properly formatted for the next agent in the pipeline.
@@ -104,23 +104,26 @@ def create_data_cleaner_agent():
                 "amount": 248.0,
                 "narration": "UPI-ALIENKIND PRIVATE",
                 "date": "2025-07-24T00:00:00",
-                "type": "DEBIT",
+                "type": "DIRECT",
                 "mode": "OTHERS",
-                "balance": 8242.88
+                "balance": 8242.88,
+                "processed": "unprocessed"
             },
             {
                 "user_id": "user_123",
                 "amount": 6000.0,
                 "narration": "UPI-KISHOR R JADHAV",
                 "date": "2025-07-22T00:00:00",
-                "type": "CREDIT",
+                "type": "DIRECT",
                 "mode": "OTHERS",
-                "balance": 11560.88
+                "balance": 11560.88,
+                "processed": "unprocessed"
             }
         ]
         ```
         
         6. Confirm successful storage and pass the transaction count to the next agent.
+        7. Strictly add "processed": "unprocessed" to each transaction and strictly add type as "DIRECT".
         ''',
         tools=[Tool(save_bulk_transactions)]
     )
@@ -145,8 +148,7 @@ def create_data_tagger_agent():
         
         5. For each transaction, perform intelligent analysis:
            - Analyze the 'narration' and 'mode' fields to determine the most appropriate category
-           - For UPI transactions, extract merchant names from the narration (e.g., 'UPI-MERCHANTNAME' → 'MERCHANTNAME')
-           - Standardize transaction types to: 'CREDIT', 'DEBIT', or 'TRANSFER'
+           - For UPI transactions, extract merchant names from the narration (e.g., 'UPI-MERCHANTNAME' or 'UPI MERCHANTNAME' → 'MERCHANTNAME')
            - Add relevant tags based on transaction patterns (e.g., 'recurring', 'refund', 'online', 'grocery', 'fuel', 'entertainment')
            - Categorize transactions into meaningful groups (e.g., 'FOOD_DINING', 'TRANSPORTATION', 'UTILITIES', 'SHOPPING', 'INCOME', etc.)
            - Preserve all original transaction data while adding/updating fields
@@ -161,7 +163,8 @@ def create_data_tagger_agent():
                        "category": "standardized_category",
                        "merchant": "extracted_merchant_name",
                        "tags": ["relevant", "tags"],
-                       "type": "standardized_type"
+                       "type": "standardized_type",
+                       "processed": "analyzed"
                    }
                }
            ]
@@ -169,7 +172,8 @@ def create_data_tagger_agent():
         
         7. For ambiguous transactions, use 'UNCATEGORIZED' rather than guessing.
         8. Maintain consistency by using standard naming for similar transactions.
-        9. Provide a summary of the tagging results.
+        9. Directly return the return without any additional summarization and text after the response from bulk_update_transactions tool.
+        10. Strictly add "processed": "analyzed" to each transaction.
         ''',
         tools=[
             Tool(get_all_transactions),
