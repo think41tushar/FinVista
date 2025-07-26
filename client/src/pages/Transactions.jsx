@@ -17,14 +17,19 @@ const Transactions = () => {
   }, [user?.id, isAuthenticated, fetchUserData]);
 
   return (
-    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#0e1238] via-[#172057] to-[#1e2d73] text-white relative isolate">
+      {/* Light Grid Texture */}
+      <div className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] bg-repeat opacity-10" />
       
-      <div className="flex flex-1 p-4 gap-4 h-[calc(100vh-88px)]">
-        <div className="w-2/3 floating-container">
+      {/* Aurora Accent */}
+      <div className="pointer-events-none absolute left-1/3 top-1/3 -z-10 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-lime-400/20 blur-3xl" />
+      
+      <div className="flex flex-1 p-4 gap-4 h-[calc(100vh-64px)]">
+        <div className="w-2/3 rounded-xl backdrop-blur-sm bg-white/5 border border-slate-700/50 shadow-2xl p-4 overflow-hidden">
           <TransactionTable />
         </div>
         
-        <div className="w-1/3 floating-container">
+        <div className="w-1/3 rounded-xl backdrop-blur-sm bg-white/5 border border-slate-700/50 shadow-2xl">
           <ChatInterface />
         </div>
       </div>

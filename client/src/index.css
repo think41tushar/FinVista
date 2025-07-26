@@ -3,17 +3,17 @@
 
 /* Custom CSS Variables for Color Scheme */
 :root {
-  --color-bg-primary: #1a1a1a;
-  --color-bg-secondary: #2a2a2a;
-  --color-bg-tertiary: #333333;
-  --color-orange: #FF7A30;
-  --color-orange-light: #FF8A45;
-  --color-orange-dark: #E56A20;
-  --color-cream: #E9E3DF;
+  --color-bg-primary: #0e1238;
+  --color-bg-secondary: #172057;
+  --color-bg-tertiary: #1e2d73;
+  --color-accent: #a3e635; /* lime-400 */
+  --color-accent-light: #bef264; /* lime-300 */
+  --color-accent-dark: #84cc16; /* lime-500 */
+  --color-cream: #f1f5f9; /* slate-100 */
   --color-white: #ffffff;
-  --color-grey-light: #666666;
-  --color-grey-medium: #555555;
-  --color-grey-dark: #444444;
+  --color-grey-light: #94a3b8; /* slate-400 */
+  --color-grey-medium: #64748b; /* slate-500 */
+  --color-grey-dark: #334155; /* slate-700 */
 }
 
 /* Global font family */
