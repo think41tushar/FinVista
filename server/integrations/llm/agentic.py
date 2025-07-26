@@ -24,7 +24,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import ADK components
-from google.adk import Agent, Tool, Runner, Message, BaseAgent
+from google.adk import Agent, Tool, Runner
 from google.adk.agents import SequentialAgent
 from google.genai import GenerativeModel
 import google.generativeai as genai

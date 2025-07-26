@@ -3,12 +3,16 @@ Tools for the FinVista multi-agent system.
 These tools will be used by the orchestrator agent to perform various operations.
 """
 from typing import List, Dict, Any, Optional
-
+from services.transaction_service import (
+    create_transactions as save_bulk_transactions_service,
+    update_single_transaction as update_single_transaction_service,
+    get_all_transactions as get_all_transactions_service
+)
 
 # Transaction Management Tools
 def save_bulk_transactions(transactions: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Save multiple transactions at once.
+    Save multiple transactions at once using the transaction service.
     
     Args:
         transactions: List of transaction dictionaries with required fields
@@ -16,18 +20,22 @@ def save_bulk_transactions(transactions: List[Dict[str, Any]]) -> Dict[str, Any]
     Returns:
         Dict containing status and results
     """
-    # Placeholder implementation
-    # TODO: Implement actual bulk transaction saving logic
-    return {
-        "status": "success",
-        "message": f"Saved {len(transactions)} transactions",
-        "transaction_ids": [f"txn_{i}" for i in range(len(transactions))]
-    }
-
+    try:
+        transaction_ids = save_bulk_transactions_service(transactions)
+        return {
+            "status": "success",
+            "message": f"Successfully saved {len(transactions)} transactions.",
+            "transaction_ids": transaction_ids
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
 def update_single_transaction(transaction_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Update a single transaction by ID.
+    Update a single transaction by ID using the transaction service.
     
     Args:
         transaction_id: The ID of the transaction to update
@@ -36,14 +44,31 @@ def update_single_transaction(transaction_id: str, updates: Dict[str, Any]) -> D
     Returns:
         Dict containing status and updated transaction
     """
-    # Placeholder implementation
-    # TODO: Implement actual transaction update logic
-    return {
-        "status": "success",
-        "message": f"Updated transaction {transaction_id}",
-        "transaction": {"id": transaction_id, **updates}
-    }
+    try:
+        updated_transaction = update_single_transaction_service(transaction_id, updates)
+        return {
+            "status": "success",
+            "message": f"Successfully updated transaction {transaction_id}.",
+            "transaction": updated_transaction
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
+def get_all_transactions() -> List[Dict[str, Any]]:
+    """
+    Get all transactions using the transaction service.
+    
+    Returns:
+        List of transaction dictionaries
+    """
+    try:
+        return get_all_transactions_service()
+    except Exception as e:
+        print(f"Error getting all transactions: {e}")
+        return []
 
 # Relation Management Tools
 def create_relation(source_id: str, target_id: str, relation_type: str, 
@@ -75,7 +100,6 @@ def create_relation(source_id: str, target_id: str, relation_type: str,
             "metadata": metadata or {}
         }
     }
-
 
 def update_relation(relation_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
     """
