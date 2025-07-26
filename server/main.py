@@ -1,5 +1,6 @@
 from typing import Union
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from integrations.llm.initial_analyser import initialize_pipeline
 from integrations.llm.agentic import initialize_agents
@@ -22,7 +23,6 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-# Import routers
 @app.on_event("startup")
 async def startup_event():
     """Initializes the AI agents and pipeline when the server starts."""

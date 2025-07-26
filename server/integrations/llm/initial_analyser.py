@@ -36,12 +36,42 @@ def create_data_cleaner_agent(mcp_tools: list):
     # Use a string model name instead of GenerativeModel instance
     return Agent(
         name="data_cleaner",
-        model="gemini-2.5-pro",
+        model="gemini-2.5-flash",
         description="Cleans and stores financial transactions from MCP.",
         instruction='''
         1. Fetch transactions from the MCP using the available tools.
-        2. Clean the data (format dates, remove duplicates).
-        3. Store the cleaned data using the save_bulk_transactions tool.
+
+        2. Clean the data:
+        - Convert all `date` fields to ISO 8601 datetime strings (e.g., "2025-07-24T00:00:00") or Python `datetime.datetime` objects.
+        - Remove duplicates based on a combination of fields such as `date`, `amount`, and `narration`.
+        - Standardize field names to match the schema: 
+            `amount`, `narration`, `date`, `type`, `mode`, `balance`, `user_id`.
+        - Ensure all fields are Firestore-compatible (no `datetime.date` types or unsupported objects).
+
+        3. Store the cleaned transactions using the `save_bulk_transactions` tool.
+
+        4. Each transaction should follow this format:
+        ```json
+        [
+        {
+            "user_id": "user_123",
+            "amount": 248.0,
+            "narration": "UPI-ALIENKIND PRIVATE",
+            "date": "2025-07-24T00:00:00",
+            "type": "DEBIT",
+            "mode": "OTHERS",
+            "balance": 8242.88
+        },
+        {
+            "user_id": "user_123",
+            "amount": 6000.0,
+            "narration": "UPI-KISHOR R JADHAV",
+            "date": "2025-07-22T00:00:00",
+            "type": "CREDIT",
+            "mode": "OTHERS",
+            "balance": 11560.88
+        }
+        ]
         ''',
         tools=all_tools
     )
@@ -54,7 +84,7 @@ def create_data_tagger_agent():
     ]
     return Agent(
         name="data_tagger",
-        model="gemini-2.5-pro",
+        model="gemini-2.5-flash",
         description="Tags financial transactions with relevant categories.",
         instruction='''
         1. Retrieve all transactions using the get_all_transactions tool.
