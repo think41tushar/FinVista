@@ -1,11 +1,26 @@
+import os
+from dotenv import load_dotenv
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, StdioServerParameters
 
+# Load environment variables
+load_dotenv()
+
 async def initialiseFiMCP():
-    # Initialize the MCPToolset with the connection parameters
+    # Get authentication credentials from environment variables
+    mcp_user_token = os.environ.get('MCP_USER_TOKEN')
+    
+    if not mcp_user_token:
+        raise ValueError("MCP authentication credentials not found in environment variables. Please set MCP_USER_TOKEN in the .env file.")
+    
+    # Initialize the MCPToolset with the connection parameters including authentication
     toolset = MCPToolset(
         connection_params=StdioServerParameters(
             command='npx',
-            args=['mcp-remote', 'https://mcp.fi.money:8080/mcp/stream'],
+            args=[
+                'mcp-remote', 
+                'https://mcp.fi.money:8080/mcp/stream',
+                '--token', mcp_user_token
+            ],
         )
     )
 

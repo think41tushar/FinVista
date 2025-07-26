@@ -66,7 +66,12 @@ def create_data_tagger_agent():
 
 async def create_initial_analysis_pipeline():
     """Creates the sequential agent pipeline for initial data processing."""
-    mcp_tools = await initialiseFiMCP()
+    try:
+        mcp_tools = await initialiseFiMCP()
+    except Exception as e:
+        logger.warning(f"Failed to initialize Fi MCP tools: {str(e)}. Continuing without MCP tools.")
+        mcp_tools = []
+        
     data_cleaner = create_data_cleaner_agent(mcp_tools)
     data_tagger = create_data_tagger_agent()
     return SequentialAgent(
@@ -90,4 +95,13 @@ async def initialize_pipeline():
             app_name="FinVistaInitialAnalysis",
             session_service=session_service
         )
+        logger.info(f"Runner object at initialize: {runner}")
         logger.info(f"Initial analysis pipeline '{pipeline.name}' initialized successfully.")
+        
+    # Create a session with the session service
+    # Use a consistent user ID that makes sense for your application
+    user_id = "finvista_user"
+    session = await runner.session_service.create_session(app_name="FinVistaInitialAnalysis", user_id=user_id)
+    logger.info(f"Created session with ID: {session.id} for user: {user_id}")
+    
+    return runner, session
