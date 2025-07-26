@@ -33,6 +33,7 @@ from google.adk.tools.function_tool import FunctionTool as Tool
 from google.adk.agents import SequentialAgent
 from google.adk.sessions import InMemorySessionService
 import google.generativeai as genai
+from google.genai import types
 
 # Configure Gemini API
 # Get API key from environment variable
@@ -75,7 +76,7 @@ def create_orchestrator_agent():
         name="finvista_orchestrator",
         description="FinVista orchestrator agent for financial transaction processing",
         instruction=instruction,
-        model="gemini-pro",
+        model="gemini-2.5-pro",
         tools=orchestrator_tools
     )
     
@@ -128,12 +129,38 @@ async def process_request(request: str) -> Dict[str, Any]:
                 "error": "Failed to initialize agents",
                 "message": "The agent system could not be initialized"
             }
+            
+    # Create a session with the session service if it doesn't exist
+    user_id = "finvista_user"
+    app_name = "FinVista"
     
     try:
+        # Create a session with the session service
+        session = await orchestrator_runner.session_service.create_session(
+            app_name=app_name, 
+            user_id=user_id
+        )
+        session_id = session.id
+        logger.info(f"Created or retrieved session with ID: {session_id} for user: {user_id}")
+        
         # Process the request through the orchestrator agent
-        # ADK's run_async method handles the message conversion and agent execution
-        result = await orchestrator_runner.run_async(request)
-        return result
+        # Create a proper user content object using the types module
+        user_content = types.UserContent(
+            parts=[types.Part.from_text(text=request)]
+        )
+        
+        # Run the agent asynchronously with the proper parameters
+        response = None
+        async for event in orchestrator_runner.run_async(
+            user_id=user_id,
+            session_id=session_id,
+            new_message=user_content
+        ):
+            if event.is_final_response():
+                response_text = event.content.parts[0].text
+                response = {"response": response_text}
+        
+        return response if response else {"response": "No response generated"}
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
         return {
